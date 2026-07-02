@@ -160,6 +160,28 @@ details pre{background:rgba(19,32,56,.05);padding:10px;border-radius:8px;font-si
 .hintfoot{margin-top:14px;font-size:11.5px;color:var(--ink3t)}
 .ff.chk{flex-direction:row;align-items:center;gap:8px;align-self:flex-end;padding-bottom:10px;cursor:pointer}
 .ff.chk input{accent-color:var(--goldd);width:15px;height:15px;cursor:pointer;margin:0}
+/* ---------- Prognose & Steuern ---------- */
+.seggrp{display:flex;flex-direction:column;gap:5px}
+.seggrp>span{color:var(--ink3t);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:10px}
+.seg{display:inline-flex;background:rgba(19,32,56,.05);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:8px 16px;border-radius:9px;font-weight:700;font-size:12.5px;color:var(--ink2);cursor:pointer;transition:.18s;letter-spacing:.02em}
+.seg button:hover{color:var(--navy);background:rgba(198,161,91,.10)}
+.seg button.on{background:var(--goldgrad);color:#14203D;box-shadow:0 4px 12px rgba(198,161,91,.4),inset 0 1px 0 rgba(255,255,255,.5)}
+.rlgbar{position:relative;display:flex;height:40px;border-radius:12px;overflow:hidden;box-shadow:inset 0 2px 8px rgba(0,0,0,.28),0 12px 26px rgba(19,32,56,.16);margin-top:6px}
+.rlgbar .segtax{width:0%;background:var(--goldgrad);display:grid;place-items:center;color:#14203D;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 18px rgba(198,161,91,.55);transition:width .9s cubic-bezier(.2,.7,.3,1)}
+.rlgbar .segrest{flex:1;background:var(--navygrad);display:grid;place-items:center;color:#8FA0C0;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;letter-spacing:.04em}
+.rlgbar .taxmark{position:absolute;top:0;bottom:0;width:2px;background:var(--reds);box-shadow:0 0 10px rgba(217,128,121,.95);z-index:2;transition:left .9s cubic-bezier(.2,.7,.3,1);cursor:help}
+.rlgleg{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--ink2)}
+.rlgleg .dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.rlgleg b{color:var(--navy);font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px}
+.assum{display:grid;grid-template-columns:200px 1fr;gap:8px 16px;font-size:13px}
+.assum .k{color:var(--ink3t);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:3px}
+.assum .v{color:var(--ink);font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12.5px;word-break:break-word}
+.notecard{border:1px solid rgba(198,161,91,.45);background:rgba(198,161,91,.07);border-radius:14px;padding:16px 18px;font-size:12.5px;color:var(--ink2);line-height:1.8}
+.notecard b{color:var(--navy)}
+.notecard code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:rgba(19,32,56,.06);padding:2px 6px;border-radius:6px;color:var(--navy);word-break:break-all}
+.progfoot{margin-top:18px;font-size:11.5px;color:var(--ink3t);border-top:1px dashed var(--line);padding-top:12px}
+@media(max-width:700px){.assum{grid-template-columns:1fr;gap:2px 0}.assum .k{padding-top:10px}}
 /* ---------- Detail ---------- */
 .detail{margin-bottom:16px}
 .dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
@@ -307,6 +329,8 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
       <a data-t="ov" class="on"><span class="i">◈</span>Übersicht</a>
       <div class="grp">Ausgaben</div>
       <a data-t="aus"><span class="i">🧾</span>Ausgaben &amp; Belege</a>
+      <div class="grp">Steuern</div>
+      <a data-t="prog"><span class="i">📈</span>Prognose &amp; Steuern</a>
       <div class="grp">PHI · Live</div>
       <a data-t="pat"><span class="i">🔎</span>Patientensuche</a>
       <a data-t="re"><span class="i">🧾</span>Rechnungsausgang</a>
@@ -337,6 +361,11 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
         <h2 class="tt">Ausgaben &amp; Belege</h2>
         <div class="ts">Belege aus dem Ausgaben-Postfach — KI-kategorisiert · Korrekturen fließen direkt nach Supabase (aal2)</div>
         <div class="tabbody" id="body-aus"></div>
+      </section>
+      <section class="tab" id="t-prog">
+        <h2 class="tt">Prognose &amp; Steuern</h2>
+        <div class="ts">Jahres-Hochrechnung je Entität und Szenario — Gewinn, geschätzte Steuerlast und empfohlene Rücklage · Supabase (aal2), pseudonymisiert</div>
+        <div class="tabbody" id="body-prog"></div>
       </section>
       <section class="tab" id="t-pat">
         <h2 class="tt">Patientensuche</h2>
@@ -724,7 +753,7 @@ async function doLogout(){
 // ---------------- App-Shell (Tabs) ----------------
 let loaded = {};
 let appWired = false;
-const LOADERS = { ov: loadOV, aus: loadAUS, pat: initPat, re: loadRE, za: loadZA, mahn: loadMJ };
+const LOADERS = { ov: loadOV, aus: loadAUS, prog: loadPROG, pat: initPat, re: loadRE, za: loadZA, mahn: loadMJ };
 
 async function enterApp(){
   if (!MOCK){
@@ -1139,6 +1168,346 @@ function renderAUS(body, belege, kats){
     }
   }
   rerender();
+}
+
+// ---------------- Tab „Prognose & Steuern" (Supabase fin_prognose, RLS aal2) ----------------
+const PROG_ENT = [['gmbh','GmbH'],['freiberufler','Freiberufler']];
+const PROG_SZ  = [['basis','Basis'],['optimistisch','Optimistisch'],['vorsichtig','Vorsichtig']];
+const PROG_LBL = Object.fromEntries(PROG_ENT.concat(PROG_SZ));
+const MONAT_KURZ = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const PROG_ANNAHME_LBL = {
+  koerperschaftsteuer:'Körperschaftsteuer', kst:'Körperschaftsteuer', kst_satz:'Körperschaftsteuer',
+  solidaritaetszuschlag:'Solidaritätszuschlag', soli:'Solidaritätszuschlag', soli_satz:'Solidaritätszuschlag',
+  gewerbesteuer_hebesatz:'GewSt-Hebesatz', gewst_hebesatz:'GewSt-Hebesatz', hebesatz:'GewSt-Hebesatz',
+  gewerbesteuer_messzahl:'GewSt-Messzahl', gewst_messzahl:'GewSt-Messzahl',
+  est_satz:'ESt-Satz', est_grenzsteuersatz:'ESt-Grenzsteuersatz', einkommensteuer:'Einkommensteuer',
+  kirchensteuer:'Kirchensteuer', freibetrag:'Freibetrag', grundfreibetrag:'Grundfreibetrag',
+  methode:'Hochrechnungsmethode', hochrechnung:'Hochrechnungsmethode',
+  datenstand:'Datenstand', hinweis:'Hinweis', monate_erfasst:'Erfasste Monate'
+};
+const PF2 = x => new Intl.NumberFormat('de-DE',{maximumFractionDigits:2}).format((x==null||isNaN(x))?0:x);
+function progNum(v){
+  if (typeof v === 'number' && !isNaN(v)) return v;
+  if (typeof v === 'string'){ const n = deNum(v); if (n != null) return n; const f = parseFloat(v); if (!isNaN(f)) return f; }
+  return null;
+}
+function monatNum(periode){
+  const M = {jan:1,feb:2,'mär':3,mrz:3,mae:3,apr:4,mai:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dez:12};
+  return M[decodeEnt(String(periode || '')).toLowerCase().slice(0,3)] || 0;
+}
+// Count-up-Animation für KPI-Werte (bei prefers-reduced-motion statisch)
+const REDUCED_MOTION = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+function countUp(node, target, fmt){
+  if (target == null || isNaN(+target)){ node.textContent = '—'; return; }
+  const v = +target;
+  if (REDUCED_MOTION || !isFinite(v)){ node.textContent = fmt(v); return; }
+  const t0 = performance.now(), ms = 850;
+  function step(t){
+    const p = Math.min(1, (t - t0) / ms);
+    node.textContent = fmt(v * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function annahmeLabel(k){
+  const hit = PROG_ANNAHME_LBL[String(k).toLowerCase()];
+  if (hit) return hit;
+  const s = String(k).replace(/_/g,' ');
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function annahmeWert(k, v){
+  if (v == null || v === '') return '—';
+  if (typeof v === 'boolean') return v ? 'ja' : 'nein';
+  const key = String(k).toLowerCase();
+  if (typeof v === 'number'){
+    if (/hebesatz/.test(key)) return PF2(v) + ' %';
+    if (v > 0 && v <= 1 && /satz|soli|steuer|messzahl|quote|anteil|aufschlag/.test(key)) return PF2(v*100) + ' %';
+    if (/freibetrag|betrag|grenze/.test(key)) return EUR(v);
+    return PF2(v);
+  }
+  if (typeof v === 'object'){ try{ return JSON.stringify(v); }catch(_e){ return String(v); } }
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}([T ].*)?$/.test(v)) return deDate(v);
+  return decodeEnt(String(v));
+}
+async function loadPROG(){
+  const body = $('#body-prog');
+  spin(body, 'Prognose wird aus Supabase geladen …');
+  try{
+    const [prognosen, belege, kpi] = await Promise.all([
+      fetchTable('fin_prognose'), fetchTable('fin_beleg'), fetchTable('fin_pas_kpi')
+    ]);
+    renderPROG(body, prognosen, belege, kpi);
+  }catch(e){
+    errBox(body, 'Die Prognose konnte nicht geladen werden: ' + friendly(e), ()=>loadPROG());
+  }
+}
+function renderPROG(body, prognosen, belege, kpi){
+  body.textContent = '';
+  function codeEl(t){ const c = document.createElement('code'); c.textContent = t; return c; }
+
+  // Jahr / aktueller (angebrochener) Monat aus dem PAS-Stichtag ableiten
+  const st = kpi.map(x => String(x.stichtag || '')).sort().pop() || '';
+  const jahr   = /^\d{4}/.test(st) ? +st.slice(0,4) : (new Date()).getFullYear();
+  const curMon = /^\d{4}-\d{2}/.test(st) ? +st.slice(5,7) : (new Date()).getMonth()+1;
+
+  // --- Chart „Einnahmen vs. Ausgaben je Monat" (YTD real + gestrichelte Hochrechnung) ---
+  const cMon = chartCard('Einnahmen vs. Ausgaben je Monat',
+    'Einnahmen: PAS-Monatsumsatz · Ausgaben: Beleg-Summen (brutto) · gestrichelt: Hochrechnung bis Jahresende', 'progMon');
+  function drawMonChart(){
+    const inc = Array(12).fill(null), exp = Array(12).fill(null);
+    kpi.filter(x => x.kind === 'turnover_monthly' && String(x.stichtag) === st).forEach(x => {
+      const n = monatNum(x.periode);
+      if (n > 0 && n <= curMon) inc[n-1] = (inc[n-1] || 0) + (progNum(x.betrag) || 0);
+    });
+    belege.forEach(b => {
+      const d = String(b.beleg_datum || '');
+      if (d.slice(0,4) !== String(jahr)) return;
+      const n = +d.slice(5,7);
+      if (n >= 1 && n <= 12) exp[n-1] = (exp[n-1] || 0) + belegNum(b.betrag_brutto);
+    });
+    if (inc.every(v => v == null) && exp.every(v => v == null)){
+      cMon.querySelector('.chartbox').replaceWith(elx('div','empty','Noch keine Monatsdaten (PAS-Umsätze / Belege) in Supabase.'));
+      return;
+    }
+    // Projektion: Ø der vollen Monate (der Stichtagsmonat gilt als angebrochen), flach bis Dezember
+    function projLine(arr){
+      const idx = arr.map((v,i)=> v != null ? i : null).filter(i => i != null);
+      if (!idx.length) return null;
+      const full = idx.filter(i => i !== curMon-1);
+      const basisIdx = full.length ? full : idx;
+      const avg = basisIdx.reduce((s,i)=> s + arr[i], 0) / basisIdx.length;
+      const anchor = basisIdx[basisIdx.length-1];
+      if (anchor >= 11) return null;
+      const line = Array(12).fill(null);
+      line[anchor] = arr[anchor];
+      for (let m = anchor+1; m < 12; m++) line[m] = Math.round(avg*100)/100;
+      return line;
+    }
+    const pInc = projLine(inc), pExp = projLine(exp);
+    const ds = [
+      Object.assign({ label:'Einnahmen', data:inc, order:3 }, neoBar(C.grn)),
+      Object.assign({ label:'Ausgaben',  data:exp, order:3 }, neoBar(C.navy2))
+    ];
+    if (pInc) ds.push({ type:'line', label:'Hochrechnung Einnahmen', data:pInc, borderColor:C.grn2,  borderDash:[7,5], borderWidth:2.5, pointRadius:0, tension:0, spanGaps:false, order:1 });
+    if (pExp) ds.push({ type:'line', label:'Hochrechnung Ausgaben',  data:pExp, borderColor:C.goldd, borderDash:[7,5], borderWidth:2.5, pointRadius:0, tension:0, spanGaps:false, order:2 });
+    mk('progMon', {
+      type:'bar',
+      data:{ labels: MONAT_KURZ.map(m => m + ' ' + String(jahr).slice(2)), datasets: ds },
+      options:{ animation:ANIM, scales:mkScales(),
+        plugins:{ legend:{position:'top', labels:{usePointStyle:true, padding:12}}, tooltip:eurTip() } }
+    });
+  }
+
+  // --- DATEV-/Steuerberater-Export: reiner Hinweis (Erzeugung läuft lokal, kein Browser-Download) ---
+  const dCard = elx('div','card');
+  dCard.append(elx('h3', null, 'Export für Steuerberater & DATEV'),
+    elx('div','cs','Beide Exporte entstehen lokal auf dem Praxis-Rechner — nichts wird aus dem Browser heruntergeladen'));
+  {
+    const nc = elx('div','notecard');
+    const l1 = elx('div'); l1.append(elx('b', null, 'Steuerberater-Export (Excel/PDF): '), codeEl('steuer_export.py'));
+    const l2 = elx('div'); l2.append(elx('b', null, 'DATEV-Buchungsstapel (EXTF): '), codeEl('datev_export.py'));
+    const l3 = elx('div'); l3.style.marginTop = '8px';
+    l3.append(document.createTextNode('Beide Skripte liegen in '), codeEl('scripts/fin_cockpit/'), document.createTextNode(' und werden lokal ausgeführt.'));
+    const l4 = elx('div'); l4.style.marginTop = '8px';
+    l4.append(document.createTextNode('⚠️ Die Kontenzuordnung ist ein KI-Vorschlag — vor dem Import in DATEV bitte prüfen.'));
+    nc.append(l1, l2, l3, l4);
+    dCard.append(nc);
+  }
+  const foot = elx('div','progfoot','⚖️ Überschlägige Planungsrechnung — ersetzt keine Steuerberatung und keinen Steuerbescheid.');
+
+  // --- Leerzustand: noch keine Prognose berechnet ---
+  if (!prognosen.length){
+    const hintCard = elx('div','card');
+    hintCard.append(elx('h3', null, 'Noch keine Prognose berechnet'),
+      elx('div','cs','In Supabase liegt noch kein fin_prognose-Datensatz.'));
+    const nc0 = elx('div','notecard');
+    nc0.append(document.createTextNode('Bitte '), codeEl('steuer_prognose.py'), document.createTextNode(' in '),
+      codeEl('scripts/fin_cockpit/'),
+      document.createTextNode(' ausführen — der Lauf berechnet Gewinn-, Steuer- und Rücklage-Prognosen je Entität (GmbH / Freiberufler) und Szenario und schreibt sie nach Supabase.'));
+    hintCard.append(nc0);
+    const rb = elx('button','btn ghost sm','Erneut laden');
+    rb.type = 'button'; rb.style.marginTop = '12px';
+    rb.addEventListener('click', ()=>loadPROG());
+    hintCard.append(rb);
+    cMon.style.marginTop = '22px';
+    dCard.style.marginTop = '22px';
+    body.append(hintCard, cMon, dCard, foot);
+    drawMonChart();
+    return;
+  }
+
+  // --- Umschalter Entität + Szenario (Segmented-Control) ---
+  const sel = { ent:'gmbh', sz:'basis' };
+  if (!prognosen.some(r => String(r.entitaet) === sel.ent && String(r.szenario) === sel.sz)){
+    const f = prognosen[0];
+    sel.ent = String(f.entitaet || 'gmbh');
+    sel.sz  = String(f.szenario || 'basis');
+  }
+  const bar = elx('div','fbar');
+  function segCtl(labelText, opts, key, onPick){
+    const wrap = elx('div','seggrp');
+    wrap.append(elx('span', null, labelText));
+    const seg = elx('div','seg');
+    opts.forEach(([v,t])=>{
+      const b = elx('button', sel[key] === v ? 'on' : '', t);
+      b.type = 'button';
+      b.addEventListener('click', ()=>{
+        if (sel[key] === v) return;
+        sel[key] = v;
+        Array.from(seg.children).forEach(x => x.classList.toggle('on', x === b));
+        onPick();
+      });
+      seg.append(b);
+    });
+    wrap.append(seg);
+    return wrap;
+  }
+  bar.append(segCtl('Entität', PROG_ENT, 'ent', ()=>update(true)),
+             segCtl('Szenario', PROG_SZ, 'sz', ()=>update(false)));
+
+  // --- Gerüst: KPIs → Rücklage-Visual → Charts → Annahmen + Export-Hinweis → Disclaimer ---
+  const kpiWrap = elx('div','grid g4');
+  const rlgCard = elx('div','card');
+  rlgCard.style.marginTop = '22px';
+  rlgCard.append(elx('h3', null, 'Steuer-Rücklage'));
+  const rlgSub  = elx('div','cs');
+  const rlgBar  = elx('div','rlgbar');
+  const segTax  = elx('div','segtax');
+  const segRest = elx('div','segrest');
+  const taxMark = elx('div','taxmark');
+  taxMark.style.display = 'none';
+  rlgBar.append(segTax, segRest, taxMark);
+  const rlgLeg = elx('div','rlgleg');
+  rlgCard.append(rlgSub, rlgBar, rlgLeg);
+
+  const g2 = elx('div','grid g2');
+  g2.style.marginTop = '22px';
+  const cSz = chartCard('Gewinn-Szenarien', 'Gewinn-Prognose je Szenario · geschätzte Steuer als zweite Serie', 'progSz');
+  g2.append(cMon, cSz);
+
+  const g2b = elx('div','grid g2');
+  g2b.style.marginTop = '22px';
+  const aCard = elx('div','card');
+  aCard.append(elx('h3', null, 'Annahmen der Berechnung'),
+    elx('div','cs','Steuersätze und Hochrechnungsmethode aus dem Prognose-Datensatz (annahmen) — transparent je Entität und Szenario'));
+  const assumBox = elx('div','assum');
+  aCard.append(assumBox);
+  g2b.append(aCard, dCard);
+  body.append(bar, kpiWrap, rlgCard, g2, g2b, foot);
+  drawMonChart();
+
+  // --- Auswahl anwenden (KPIs, Rücklage-Visual, Annahmen, Szenarien-Chart) ---
+  function currentRow(){
+    return prognosen.find(r => String(r.entitaet) === sel.ent && String(r.szenario) === sel.sz) || null;
+  }
+  function annahmenOf(r){
+    let a = r ? r.annahmen : null;
+    if (typeof a === 'string'){ try{ a = JSON.parse(a); }catch(_e){ a = { hinweis: a }; } }
+    return (a && typeof a === 'object' && !Array.isArray(a)) ? a : {};
+  }
+  function drawSzChart(){
+    const rows3 = PROG_SZ.map(([v]) => prognosen.find(x => String(x.entitaet) === sel.ent && String(x.szenario) === v) || null);
+    mk('progSz', {
+      type:'bar',
+      data:{ labels: PROG_SZ.map(s => s[1]),
+        datasets:[
+          Object.assign({ label:'Gewinn-Prognose',  data: rows3.map(x => x ? progNum(x.gewinn_prognose)  : null) }, neoBar(C.navy2)),
+          Object.assign({ label:'Steuer geschätzt', data: rows3.map(x => x ? progNum(x.steuer_geschaetzt) : null) }, neoBar(C.red))
+        ] },
+      options:{ animation:ANIM, scales:mkScales(),
+        plugins:{ legend:{position:'top', labels:{usePointStyle:true, padding:12}}, vlbl:{on:true, fmt:K}, tooltip:eurTip() } }
+    });
+  }
+  function update(rebuildSz){
+    const r = currentRow();
+    const entL = PROG_LBL[sel.ent] || sel.ent, szL = PROG_LBL[sel.sz] || sel.sz;
+    kpiWrap.textContent = '';
+    if (!r){
+      const eb = elx('div','empty','Für ' + entL + ' / ' + szL + ' liegt keine Prognose vor — bitte steuer_prognose.py ausführen.');
+      eb.style.gridColumn = '1 / -1';
+      kpiWrap.append(eb);
+      rlgSub.textContent = entL + ' · Szenario ' + szL + ' — keine Daten';
+      segTax.style.width = '0%'; segTax.textContent = ''; segRest.textContent = '—';
+      taxMark.style.display = 'none';
+      rlgLeg.textContent = '';
+      assumBox.textContent = '';
+      const ae = elx('div','empty','Keine Annahmen verfügbar.');
+      ae.style.gridColumn = '1 / -1';
+      assumBox.append(ae);
+      if (rebuildSz) drawSzChart();
+      return;
+    }
+    const rJahr  = progNum(r.jahr) || jahr;
+    const gewinn = progNum(r.gewinn_prognose);
+    const steuer = progNum(r.steuer_geschaetzt);
+    const ruck   = progNum(r.ruecklage_empfohlen);
+    const satzR  = progNum(r.steuersatz_effektiv);
+    const satz   = satzR == null ? null : (satzR > 1 ? satzR : satzR * 100);
+    const mon    = progNum(r.monate_erfasst);
+    const eP = progNum(r.einnahmen_prognose), aP = progNum(r.ausgaben_prognose);
+    function mkKpi(cls, icon, lab, footTxt, val, fmt){
+      const c = kpiCard(cls, icon, lab, '', footTxt);
+      countUp(c.querySelector('.val'), val, fmt);
+      return c;
+    }
+    kpiWrap.append(
+      mkKpi('a-navy','◈','Gewinn-Prognose ' + rJahr,
+        (eP != null && aP != null) ? (EUR(eP) + ' Einnahmen − ' + EUR(aP) + ' Ausgaben') : 'Jahres-Hochrechnung',
+        gewinn, EUR),
+      mkKpi('a-red','🏛','Steuer geschätzt',
+        sel.ent === 'gmbh' ? 'KSt + Soli + GewSt — überschlägig' : 'ESt + Soli — überschlägig',
+        steuer, EUR),
+      mkKpi('a-gold','🛡','Empfohlene Rücklage',
+        ruck != null ? ('entspricht ' + EUR(ruck/12) + ' pro Monat') : 'inkl. Sicherheitsaufschlag',
+        ruck, EUR),
+      mkKpi('a-grn','％','Effektiver Steuersatz',
+        mon ? ('Basis: ' + F(mon) + ' erfasste Monate') : 'geschätzte Steuer ÷ Gewinn',
+        satz, v => F(v,1) + ' %')
+    );
+    // Rücklage-Visual: Gewinn-Balken (Navy) → goldener Rücklage-Anteil, rote Marke = Steuer
+    const pct  = (gewinn && gewinn > 0 && ruck   != null) ? Math.max(0, Math.min(100, ruck   / gewinn * 100)) : 0;
+    const tpct = (gewinn && gewinn > 0 && steuer != null) ? Math.max(0, Math.min(100, steuer / gewinn * 100)) : null;
+    rlgSub.textContent = 'Gewinn-Prognose ' + rJahr + ' (' + entL + ' · ' + szL + ') — der goldene Anteil ist die empfohlene Rücklage, die rote Marke die geschätzte Steuer.';
+    segTax.style.width = pct + '%';
+    segTax.textContent = pct >= 14 ? ('Rücklage ' + F(pct,1) + ' %') : '';
+    segRest.textContent = pct <= 86 ? 'verbleibt nach Rücklage' : '';
+    if (tpct == null){
+      taxMark.style.display = 'none';
+    } else {
+      taxMark.style.display = 'block';
+      taxMark.style.left = 'calc(' + tpct + '% - 1px)';
+      taxMark.title = 'Steuer geschätzt: ' + EUR(steuer) + ' (' + F(tpct,1) + ' % vom Gewinn)';
+    }
+    rlgLeg.textContent = '';
+    function legItem(color, label, val, thin){
+      const s = elx('span');
+      const d = elx('span','dot');
+      d.style.background = color;
+      if (thin) d.style.width = '3px';
+      s.append(d, document.createTextNode(label + ' '), elx('b', null, val));
+      return s;
+    }
+    rlgLeg.append(
+      legItem('linear-gradient(135deg,#E0C583,#A6863F)','Rücklage empfohlen:', ruck != null ? (EUR(ruck) + ' (' + F(pct,1) + ' %)') : '—'),
+      legItem('#C0473E','Steuer geschätzt:', steuer != null ? EUR(steuer) : '—', true),
+      legItem('#132038','rechnerisch verbleiben:', (gewinn != null && ruck != null) ? EUR(gewinn - ruck) : '—')
+    );
+    // Annahmen-Panel (transparent aus dem annahmen-JSON)
+    assumBox.textContent = '';
+    const a = annahmenOf(r);
+    const keys = Object.keys(a);
+    if (!keys.length){
+      const ae = elx('div','empty','Keine Annahmen im Datensatz hinterlegt.');
+      ae.style.gridColumn = '1 / -1';
+      assumBox.append(ae);
+    } else {
+      keys.forEach(k => {
+        assumBox.append(elx('div','k', annahmeLabel(k)), elx('div','v', annahmeWert(k, a[k])));
+      });
+    }
+    if (rebuildSz) drawSzChart();
+  }
+  update(true);
 }
 
 // ---------------- PHI-Proxy-Schicht ----------------
@@ -1726,6 +2095,7 @@ function mockTage(){
 // Beispiel-Belege für den Tab „Ausgaben & Belege" (frei erfunden, PHI-frei)
 const MOCK_KATS = [
   { id:'miete',             name:'Miete & Nebenkosten', gruppe:'Raumkosten',    sort:10 },
+  { id:'personal',          name:'Personal & Gehälter', gruppe:'Personal',      sort:15 },
   { id:'praxisbedarf',      name:'Praxisbedarf',        gruppe:'Material',      sort:20 },
   { id:'software',          name:'Software & IT',       gruppe:'IT',            sort:30 },
   { id:'fortbildung',       name:'Fortbildung',         gruppe:'Personal',      sort:40 },
@@ -1757,11 +2127,113 @@ const MOCK_BELEGE = [
   { id:'BLG-BSP-0102', beleg_datum:'2026-06-05', haendler:'Aral Tankstelle Alsterufer', beschreibung:'Kraftstoff Praxisfahrzeug',
     betrag_netto:71.34, mwst_satz:19, mwst_betrag:13.55, betrag_brutto:84.89, kategorie_id:'kfz', status:'erfasst',
     steuerrelevant:false, ki_konfidenz:0.62, ki_begruendung:'Tankbeleg ohne Fahrzeugzuordnung — bitte privat/geschäftlich prüfen.',
-    storage_pfad:null, quelle:'beispiel' }
+    storage_pfad:null, quelle:'beispiel' },
+  { id:'BLG-BSP-0101', beleg_datum:'2026-06-30', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben Juni 2026',
+    betrag_netto:52400.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:52400.00, kategorie_id:'personal', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
+    storage_pfad:'2026/06/bsp-lohn-juni.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0100', beleg_datum:'2026-06-01', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Juni 2026',
+    betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
+    storage_pfad:'2026/06/bsp-miete-juni.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0099', beleg_datum:'2026-05-30', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben Mai 2026',
+    betrag_netto:51900.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:51900.00, kategorie_id:'personal', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
+    storage_pfad:'2026/05/bsp-lohn-mai.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0098', beleg_datum:'2026-05-15', haendler:'IVS Medizintechnik GmbH', beschreibung:'Wartung EEG-Arbeitsplatz (Jahresservice)',
+    betrag_netto:580.00, mwst_satz:19, mwst_betrag:110.20, betrag_brutto:690.20, kategorie_id:'praxisbedarf', status:'geprüft',
+    steuerrelevant:true, ki_konfidenz:0.88, ki_begruendung:'Servicebericht Medizintechnik — Betriebsausgabe Gerätewartung.',
+    storage_pfad:'2026/05/bsp-eeg-wartung.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0097', beleg_datum:'2026-05-04', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Mai 2026',
+    betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
+    storage_pfad:'2026/05/bsp-miete-mai.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0096', beleg_datum:'2026-05-02', haendler:'clinicos.ai GmbH', beschreibung:'PVS-Lizenz Mai 2026',
+    betrag_netto:289.00, mwst_satz:19, mwst_betrag:54.91, betrag_brutto:343.91, kategorie_id:'software', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.94, ki_begruendung:'SaaS-Abo-Rechnung mit ausgewiesenem Leistungszeitraum.',
+    storage_pfad:'2026/05/bsp-software-mai.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0095', beleg_datum:'2026-04-29', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben April 2026',
+    betrag_netto:51900.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:51900.00, kategorie_id:'personal', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
+    storage_pfad:'2026/04/bsp-lohn-april.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0094', beleg_datum:'2026-04-10', haendler:'Hogrefe Verlag GmbH', beschreibung:'Testverfahren & Auswertungsbögen ADHS-Diagnostik',
+    betrag_netto:759.20, mwst_satz:7, mwst_betrag:53.14, betrag_brutto:812.34, kategorie_id:'praxisbedarf', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.90, ki_begruendung:'Fachverlag-Rechnung für psychologische Testverfahren — Praxisbedarf.',
+    storage_pfad:'2026/04/bsp-hogrefe.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0093', beleg_datum:'2026-04-01', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete April 2026',
+    betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
+    storage_pfad:'2026/04/bsp-miete-april.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0092', beleg_datum:'2026-03-31', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben März 2026',
+    betrag_netto:50750.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:50750.00, kategorie_id:'personal', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
+    storage_pfad:'2026/03/bsp-lohn-maerz.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0091', beleg_datum:'2026-03-09', haendler:'Signal Iduna Gruppe', beschreibung:'Praxis- & Berufshaftpflicht Q2/2026',
+    betrag_netto:486.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:486.00, kategorie_id:'sonstiges', status:'geprüft',
+    steuerrelevant:true, ki_konfidenz:0.84, ki_begruendung:'Versicherungsbeitrag (USt-frei) — Betriebsausgabe Versicherung.',
+    storage_pfad:'2026/03/bsp-versicherung.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0090', beleg_datum:'2026-03-02', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete März 2026',
+    betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
+    storage_pfad:'2026/03/bsp-miete-maerz.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0089', beleg_datum:'2026-02-27', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben Februar 2026',
+    betrag_netto:50750.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:50750.00, kategorie_id:'personal', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
+    storage_pfad:'2026/02/bsp-lohn-februar.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0088', beleg_datum:'2026-02-13', haendler:'Bürobedarf Nord GmbH', beschreibung:'Druckerpapier, Toner, Ordner',
+    betrag_netto:180.35, mwst_satz:19, mwst_betrag:34.27, betrag_brutto:214.62, kategorie_id:'sonstiges', status:'geprüft',
+    steuerrelevant:true, ki_konfidenz:0.81, ki_begruendung:'Sammelrechnung Büromaterial — laufender Praxisbedarf.',
+    storage_pfad:'2026/02/bsp-buero.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0087', beleg_datum:'2026-02-02', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Februar 2026',
+    betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
+    storage_pfad:'2026/02/bsp-miete-februar.pdf', quelle:'beispiel' }
 ];
+// Beispiel-Prognosen (fin_prognose) — konsistent aus den Mock-Reihen oben abgeleitet
+// (Einnahmen = Mock-PAS-Monatsumsätze, Ausgaben = Mock-Beleg-Summen; Juli gilt als angebrochen).
+const MOCK_PROGNOSE = (function(){
+  const T = [149832.21, 99742.29, 155785.46, 156949.81, 140961.21]; // Feb–Jun (voll) — wie fin_pas_kpi unten
+  const JULI = 37704.84;
+  const eYtd = T.reduce((s,v)=>s+v,0) + JULI;
+  const eAvg = T.reduce((s,v)=>s+v,0) / T.length;
+  const bm = {};
+  MOCK_BELEGE.forEach(b => { const m = +String(b.beleg_datum).slice(5,7); bm[m] = (bm[m]||0) + b.betrag_brutto; });
+  const aYtd = Object.values(bm).reduce((s,v)=>s+v,0);
+  const aAvg = [2,3,4,5,6].reduce((s,m)=>s+(bm[m]||0),0) / 5;
+  const r2 = x => Math.round(x*100)/100;
+  const hoch = (ytd, avg, angebrochen) => ytd + avg*5 + Math.max(0, avg - angebrochen); // Aug–Dez + Rest-Juli
+  const GA = { koerperschaftsteuer:0.15, solidaritaetszuschlag:0.055, gewerbesteuer_messzahl:0.035, gewerbesteuer_hebesatz:470,
+    methode:'Lineare Hochrechnung: Ø der vollen Monate (Feb–Jun) × Restmonate', datenstand:'2026-07-02', hinweis:'Beispieldaten (Vorschau-Modus)' };
+  const gRow = (sz, fe, fa) => {
+    const eP = r2(hoch(eYtd, eAvg, JULI) * fe);
+    const aP = r2(hoch(aYtd, aAvg, bm[7]||0) * fa);
+    const gew = r2(eP - aP);
+    const st  = r2(gew * 0.32275); // 15 % KSt + 5,5 % Soli auf KSt + GewSt (Messzahl 3,5 % × Hebesatz 470 %)
+    return { jahr:2026, szenario:sz, entitaet:'gmbh',
+      einnahmen_ytd:r2(eYtd), ausgaben_ytd:r2(aYtd),
+      einnahmen_prognose:eP, ausgaben_prognose:aP, gewinn_prognose:gew,
+      steuer_geschaetzt:st, steuersatz_effektiv:0.32275,
+      ruecklage_empfohlen:Math.ceil(st*1.08/500)*500, monate_erfasst:6, annahmen:GA };
+  };
+  const FA = { est_grenzsteuersatz:0.42, solidaritaetszuschlag:0.055,
+    methode:'Lineare Hochrechnung der freiberuflichen Einnahmen (YTD)', datenstand:'2026-07-02', hinweis:'Beispieldaten (Vorschau-Modus)' };
+  const fRow = (sz, eP, aP, satz) => {
+    const gew = r2(eP - aP), st = r2(gew * satz);
+    return { jahr:2026, szenario:sz, entitaet:'freiberufler',
+      einnahmen_ytd:243180.55, ausgaben_ytd:106934.20,
+      einnahmen_prognose:eP, ausgaben_prognose:aP, gewinn_prognose:gew,
+      steuer_geschaetzt:st, steuersatz_effektiv:satz,
+      ruecklage_empfohlen:Math.ceil(st*1.08/500)*500, monate_erfasst:6, annahmen:FA };
+  };
+  return [
+    gRow('basis', 1, 1), gRow('optimistisch', 1.08, 1.02), gRow('vorsichtig', 0.88, 1.04),
+    fRow('basis', 486000, 214000, 0.386), fRow('optimistisch', 524880, 218280, 0.392), fRow('vorsichtig', 427680, 222560, 0.372)
+  ];
+})();
 const MOCKDB = {
   fin_beleg: MOCK_BELEGE,
   fin_kategorie: MOCK_KATS,
+  fin_prognose: MOCK_PROGNOSE,
   fin_umsatz_tag: mockTage(),
   fin_pas_kpi: [
     { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Feb', betrag:149832.21, meta:null },
