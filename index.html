@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>NEVPAZ · Finanz-Cockpit</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23C6A15B'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-weight='800' font-size='36' fill='%2314203D' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+:root{
+--creme:#F4EEE1;--creme2:#FBF7EE;--card:#FCFAF4;--navy:#132038;--navy2:#1C2E4E;--navy3:#25406B;
+--gold:#C6A15B;--gold2:#E0C583;--goldd:#A6863F;--grn:#2F7D5B;--grn2:#48A57C;--red:#C0473E;--reds:#D98079;
+--ink:#1B2540;--ink2:#5A6478;--ink3:#93805A;--line:#E6DCC7;
+--sh:0 2px 6px rgba(19,32,56,.08),0 14px 34px rgba(19,32,56,.10);
+--sh2:0 4px 10px rgba(19,32,56,.12),0 24px 54px rgba(19,32,56,.16);
+--goldgrad:linear-gradient(135deg,#E0C583,#C6A15B 55%,#A6863F);
+--navygrad:linear-gradient(150deg,#1C2E4E 0%,#132038 60%,#0E1729 100%);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--creme);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;
+background-image:radial-gradient(1200px 400px at 80% -5%,rgba(198,161,91,.10),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(47,125,91,.07),transparent 55%)}
+h1,h2,h3,.serif{font-family:'Playfair Display',Georgia,serif}
+.mono{font-family:'JetBrains Mono',monospace}
+button{font-family:'DM Sans',system-ui,sans-serif}
+/* ---------- Screens ---------- */
+.scr{display:none}.scr.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(72,165,124,.5)}70%{box-shadow:0 0 0 8px rgba(72,165,124,0)}100%{box-shadow:0 0 0 0 rgba(72,165,124,0)}}
+@keyframes glow{0%,100%{box-shadow:0 6px 30px rgba(198,161,91,.35)}50%{box-shadow:0 6px 46px rgba(198,161,91,.75)}}
+/* ---------- Auth (Private-Banking-Karte auf Navy) ---------- */
+.authwrap{min-height:100vh;background:var(--navygrad);background-image:radial-gradient(700px 420px at 82% 8%,rgba(198,161,91,.16),transparent 62%),radial-gradient(560px 420px at 6% 96%,rgba(47,125,91,.12),transparent 60%),var(--navygrad);display:grid;place-items:center;padding:28px 16px}
+.authcard{width:min(430px,94vw);background:linear-gradient(180deg,var(--creme2),var(--card));border-radius:20px;border:1px solid rgba(198,161,91,.65);box-shadow:0 40px 90px rgba(0,0,0,.5),0 0 0 1px rgba(224,197,131,.15);padding:34px 32px 28px;position:relative;overflow:hidden;animation:rise .45s cubic-bezier(.2,.7,.3,1)}
+.authcard:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--goldgrad)}
+.abrand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:22px;text-align:center}
+.mono-n{width:54px;height:54px;border-radius:16px;background:var(--goldgrad);display:grid;place-items:center;color:#14203D;font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:27px;box-shadow:0 8px 22px rgba(198,161,91,.45),inset 0 1px 0 rgba(255,255,255,.55)}
+.abrand b{font-family:'Playfair Display',Georgia,serif;font-size:21px;color:var(--navy);letter-spacing:.4px}
+.abrand span{display:block;font-size:10.5px;color:var(--ink3);letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+.atitle{font-size:17px;color:var(--navy);text-align:center;margin-bottom:4px}
+.asub{font-size:12.5px;color:var(--ink2);text-align:center;margin-bottom:18px;line-height:1.6}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink3);margin-bottom:6px}
+.fld input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#FFFDF7;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);outline:none;transition:.18s}
+.fld input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,161,91,.18)}
+.codein{font-family:'JetBrains Mono',monospace!important;font-size:29px!important;font-weight:600;letter-spacing:.42em;text-align:center;padding:13px 6px 13px 14px!important;color:var(--navy)!important}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;transition:.18s;padding:13px 18px}
+.btn.gold{width:100%;background:var(--goldgrad);color:#14203D;box-shadow:0 8px 20px rgba(198,161,91,.4),inset 0 1px 0 rgba(255,255,255,.5);letter-spacing:.02em}
+.btn.gold:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(198,161,91,.5)}
+.btn.gold:disabled{opacity:.6;cursor:default;transform:none}
+.btn.sm{padding:8px 14px;font-size:12.5px;width:auto}
+.btn.ghost{background:transparent;border:1px solid var(--gold);color:var(--goldd)}
+.btn.ghost:hover{background:rgba(198,161,91,.1)}
+.btn.ghostw{background:rgba(255,255,255,.04);border:1px solid rgba(198,161,91,.5);color:var(--gold2);padding:8px 16px;font-size:12.5px}
+.btn.ghostw:hover{background:rgba(198,161,91,.14)}
+.err{display:none;margin:12px 0 2px;padding:11px 14px;border-radius:11px;border:1px solid rgba(192,71,62,.4);background:rgba(192,71,62,.08);color:var(--red);font-size:12.5px;line-height:1.55}
+.err.on{display:block}
+.afoot{margin-top:18px;text-align:center;font-size:10.5px;color:var(--ink3);letter-spacing:.05em}
+.alink{display:block;margin:14px auto 0;font-size:12px;color:var(--ink2);cursor:pointer;text-decoration:underline;background:none;border:0}
+.alink:hover{color:var(--navy)}
+.qrbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;place-items:center;margin:6px auto 12px;width:206px;height:206px;box-shadow:inset 0 1px 3px rgba(19,32,56,.08)}
+.qrbox img{width:182px;height:182px}
+#enroll-qr:not([src]){display:none}
+.secretrow{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:4px;flex-wrap:wrap}
+.secret{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:rgba(19,32,56,.06);padding:6px 10px;border-radius:8px;word-break:break-all;user-select:all;max-width:260px;color:var(--navy)}
+.steps{font-size:12.5px;color:var(--ink2);margin:12px 0 16px;padding-left:20px;line-height:1.9;text-align:left}
+.steps li::marker{color:var(--goldd);font-weight:700}
+/* ---------- Boot ---------- */
+.bootwrap{position:fixed;inset:0;background:var(--navygrad);display:grid;place-items:center;color:#C9BFA6;text-align:center}
+.bootwrap .mono-n{animation:glow 1.8s ease-in-out infinite;margin:0 auto 16px}
+/* ---------- App-Shell ---------- */
+.app{display:flex;min-height:100vh}
+.side{width:244px;background:var(--navygrad);color:#E9DFC8;padding:26px 16px;position:sticky;top:0;height:100vh;flex-shrink:0;box-shadow:6px 0 30px rgba(19,32,56,.18)}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px 22px;border-bottom:1px solid rgba(198,161,91,.25);margin-bottom:14px}
+.brand .m{width:40px;height:40px;border-radius:12px;background:var(--goldgrad);display:grid;place-items:center;color:#14203D;font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:20px;box-shadow:0 6px 16px rgba(198,161,91,.4),inset 0 1px 0 rgba(255,255,255,.5);flex-shrink:0}
+.brand b{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:18px;color:#F4EEE1;letter-spacing:.3px}
+.brand span{display:block;font-size:11px;color:var(--gold2);letter-spacing:.14em;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:11px;color:#C9BFA6;font-weight:600;font-size:13.5px;cursor:pointer;margin-bottom:3px;transition:.18s;border:1px solid transparent;user-select:none}
+.nav a:hover{background:rgba(255,255,255,.05);color:#F4EEE1}
+.nav a.on{background:linear-gradient(100deg,rgba(198,161,91,.22),rgba(198,161,91,.06));color:#F6E7C4;border-color:rgba(198,161,91,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.nav a .i{width:20px;text-align:center;font-size:15px}
+.nav .grp{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#7C8AA6;font-weight:700;padding:16px 13px 6px}
+.sfoot{position:absolute;bottom:20px;left:16px;right:16px;font-size:11px;color:#7C8AA6;line-height:1.7;border-top:1px solid rgba(198,161,91,.2);padding-top:12px}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--grn2);margin-right:6px;box-shadow:0 0 0 0 rgba(72,165,124,.6);animation:pulse 2s infinite}
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.hero{background:var(--navygrad);color:#F4EEE1;padding:28px 40px 32px;position:relative;overflow:hidden;box-shadow:0 8px 30px rgba(19,32,56,.2)}
+.hero:after{content:"";position:absolute;top:-40%;right:-5%;width:340px;height:340px;background:radial-gradient(circle,rgba(198,161,91,.22),transparent 65%);pointer-events:none}
+.hero h1{font-size:29px;font-weight:800;letter-spacing:.4px;color:#F7EFDD}
+.hero .sub{color:#C9BFA6;font-size:13px;margin-top:5px;max-width:640px}
+.hero .gline{height:3px;width:80px;background:var(--goldgrad);border-radius:3px;margin-top:14px;box-shadow:0 2px 10px rgba(198,161,91,.5)}
+.hctrl{position:absolute;top:24px;right:36px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;z-index:2}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:9999px;border:1px solid rgba(198,161,91,.45);background:rgba(198,161,91,.12);color:#F6E7C4;font-size:12px;font-weight:600;white-space:nowrap}
+.huser{font-size:12px;color:#C9BFA6}
+.wrap{padding:26px 40px 30px;flex:1}
+.tab{display:none}.tab.on{display:block;animation:rise .4s cubic-bezier(.2,.7,.3,1)}
+.tt{font-size:23px;color:var(--navy);font-weight:700}
+.ts{color:var(--ink2);font-size:13px;margin:2px 0 18px}
+.grid{display:grid;gap:22px}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:linear-gradient(180deg,var(--creme2),var(--card));border-radius:16px;box-shadow:var(--sh);padding:24px;border:1px solid var(--line);position:relative;transition:.25s;overflow:hidden}
+.card:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--goldgrad);opacity:.75}
+.card:hover{box-shadow:var(--sh2);transform:translateY(-2px)}
+.card h3{font-size:17px;font-weight:700;color:var(--navy)}
+.card .cs{color:var(--ink2);font-size:12.5px;margin-bottom:16px;margin-top:1px}
+.kpi{padding:22px 24px}
+.kpi .lab{color:var(--ink3);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;padding-right:52px}
+.kpi .val{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:31px;margin-top:9px;letter-spacing:-.5px;color:var(--navy);text-shadow:0 2px 0 rgba(19,32,56,.06),0 4px 12px rgba(19,32,56,.08);word-break:break-word}
+.kpi .foot{color:var(--ink2);font-size:12px;margin-top:9px}
+.kpi .acc{position:absolute;top:20px;right:22px;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:20px;box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.6)}
+.a-gold .acc{background:var(--goldgrad);color:#14203D}.a-gold .val{color:var(--goldd)}
+.a-grn .acc{background:linear-gradient(135deg,#48A57C,#2F7D5B);color:#fff}.a-grn .val{color:var(--grn)}
+.a-navy .acc{background:var(--navygrad);color:var(--gold2)}
+.a-red .acc{background:linear-gradient(135deg,#D98079,#C0473E);color:#fff}.a-red .val{color:var(--red)}
+.chartbox{position:relative;height:330px;filter:drop-shadow(0 12px 16px rgba(19,32,56,.10))}.chartbox.sm{height:250px}
+/* ---------- Tabellen ---------- */
+.tscroll{overflow:auto;max-height:560px;border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--ink2);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:10px;border-bottom:2px solid var(--gold);position:sticky;top:0;background:linear-gradient(180deg,var(--creme2),var(--card));z-index:1}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:rgba(198,161,91,.06)}
+tr.clickable{cursor:pointer}
+td.num,th.num{text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600;white-space:nowrap}
+details summary{cursor:pointer;color:var(--goldd);font-weight:600;font-size:12px;user-select:none}
+details pre{background:rgba(19,32,56,.05);padding:10px;border-radius:8px;font-size:11px;overflow:auto;max-height:260px;font-family:'JetBrains Mono',monospace;margin-top:6px;max-width:560px}
+/* ---------- Filterleiste ---------- */
+.fbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;background:linear-gradient(180deg,var(--creme2),var(--card));border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;position:relative;overflow:hidden}
+.fbar:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--goldgrad);opacity:.75}
+.ff{display:flex;flex-direction:column;gap:5px}
+.ff>span{color:var(--ink3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:10px}
+.ff input,.ff select{padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#FFFDF7;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:.15s}
+.ff input:focus,.ff select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,161,91,.15)}
+.ff.grow{flex:1;min-width:210px}.ff.grow input{width:100%}
+.finfo{font-size:12px;color:var(--ink2);margin:2px 2px 10px;font-family:'JetBrains Mono',monospace}
+/* ---------- Zustände ---------- */
+.spinwrap{display:flex;align-items:center;gap:12px;padding:36px 20px;justify-content:center;color:var(--ink2);font-size:13px}
+.spinner{width:22px;height:22px;border-radius:50%;border:3px solid rgba(198,161,91,.25);border-top-color:var(--gold);animation:rot .9s linear infinite;flex-shrink:0}
+.errbox{border:1px solid rgba(192,71,62,.4);background:rgba(192,71,62,.07);border-radius:14px;padding:18px;color:var(--red);font-size:13.5px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.empty{padding:28px;text-align:center;color:var(--ink2);font-style:italic;font-size:13px}
+.sumline{display:none;gap:20px;flex-wrap:wrap;margin-top:12px;padding:12px 16px;border-radius:12px;background:rgba(19,32,56,.045);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600}
+.sumline .pos{color:var(--grn)}.sumline .neg{color:var(--red)}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--red);color:#fff;padding:12px 18px;border-radius:12px;box-shadow:var(--sh2);font-size:13px;z-index:99;max-width:420px;animation:rise .3s}
+/* ---------- Detail ---------- */
+.detail{margin-bottom:16px}
+.dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+.xbtn{border:0;background:rgba(19,32,56,.06);width:30px;height:30px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--ink2);flex-shrink:0}
+.xbtn:hover{background:rgba(192,71,62,.12);color:var(--red)}
+.dgrid{display:grid;grid-template-columns:190px 1fr;gap:8px 16px;font-size:13px}
+.dt{color:var(--ink3);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:3px}
+.dd{color:var(--ink);word-break:break-word}
+.dactions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.pfoot{padding:16px 40px 26px;color:var(--ink3);font-size:11.5px}
+pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:11.5px;overflow:auto;max-height:420px;font-family:'JetBrains Mono',monospace}
+/* ---------- Responsive ---------- */
+@media(max-width:1150px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+@media(max-width:900px){
+.app{flex-direction:column}
+.side{width:100%;height:auto;position:static;padding:12px 14px 8px;box-shadow:0 4px 18px rgba(19,32,56,.25)}
+.brand{padding:0 4px 10px;margin-bottom:8px;border-bottom:0}
+.nav{display:flex;overflow-x:auto;gap:6px;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.nav .grp{display:none}
+.nav a{white-space:nowrap;margin-bottom:0;padding:9px 13px;flex-shrink:0}
+.sfoot{display:none}
+.hero{padding:20px 18px 24px}
+.hero h1{font-size:24px}
+.hctrl{position:static;margin-bottom:12px;justify-content:flex-start}
+.wrap{padding:18px 14px 40px}
+.pfoot{padding:12px 18px 22px}
+.dgrid{grid-template-columns:1fr;gap:2px 0}
+.dt{padding-top:10px}
+}
+@media(max-width:560px){.g4{grid-template-columns:1fr}.kpi .val{font-size:26px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ============ BOOT ============ -->
+<div class="scr on" id="scr-boot">
+  <div class="bootwrap">
+    <div>
+      <div class="mono-n">N</div>
+      <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;color:#F4EEE1">NEVPAZ</div>
+      <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#C6A15B;margin-top:3px">Finanz-Cockpit</div>
+      <div style="font-size:12.5px;margin-top:18px">Cockpit wird geladen …</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LOGIN ============ -->
+<div class="scr" id="scr-login">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="abrand">
+        <div class="mono-n">N</div>
+        <div><b>NEVPAZ</b><span>Finanz-Cockpit</span></div>
+      </div>
+      <div class="atitle serif">Anmeldung</div>
+      <div class="asub">Geschützter Bereich der Praxisleitung.<br>Bitte mit E-Mail und Passwort anmelden.</div>
+      <form id="login-form" novalidate>
+        <div class="fld">
+          <label for="login-email">E-Mail</label>
+          <input id="login-email" type="email" value="dr.golsari@nevpaz.de" autocomplete="username" required>
+        </div>
+        <div class="fld">
+          <label for="login-pass">Passwort</label>
+          <input id="login-pass" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn gold" id="login-btn" data-label="Anmelden" type="submit">Anmelden</button>
+      </form>
+      <div class="err" id="err-login"></div>
+      <div class="afoot">🔐 Zwei-Faktor-Authentifizierung erforderlich · Supabase EU</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2FA-EINRICHTUNG (TOTP-Enrollment) ============ -->
+<div class="scr" id="scr-enroll">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="abrand">
+        <div class="mono-n">N</div>
+        <div><b>NEVPAZ</b><span>Finanz-Cockpit</span></div>
+      </div>
+      <div class="atitle serif">Zwei-Faktor-Schutz einrichten</div>
+      <div class="asub">Das Cockpit verlangt eine Authenticator-App (TOTP).<br>Einmal einrichten — danach genügt der 6-stellige Code.</div>
+      <div class="qrbox" id="qrbox">
+        <div class="spinner" id="qr-spin"></div>
+        <img id="enroll-qr" alt="QR-Code für die Authenticator-App">
+      </div>
+      <div class="secretrow">
+        <code class="secret" id="enroll-secret">…</code>
+        <button class="btn ghost sm" id="copy-secret" type="button">Kopieren</button>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--ink3)">Falls das Scannen nicht klappt: Schlüssel manuell eingeben.</div>
+      <ol class="steps">
+        <li>Microsoft Authenticator öffnen</li>
+        <li>Konto hinzufügen → „Anderes Konto (Google, Facebook usw.)“</li>
+        <li>QR-Code scannen</li>
+        <li>Den 6-stelligen Code unten eingeben</li>
+      </ol>
+      <form id="enroll-form" novalidate>
+        <div class="fld">
+          <label for="enroll-code">Bestätigungscode</label>
+          <input id="enroll-code" class="codein" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="······">
+        </div>
+        <button class="btn gold" id="enroll-btn" data-label="Bestätigen &amp; aktivieren" type="submit">Bestätigen &amp; aktivieren</button>
+      </form>
+      <div class="err" id="err-enroll"></div>
+      <button class="btn ghost sm" id="enroll-retry" type="button" style="display:none;margin:12px auto 0">Einrichtung erneut starten</button>
+      <button class="alink" id="enroll-cancel" type="button">Abbrechen &amp; abmelden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2FA-CODE (PIN) ============ -->
+<div class="scr" id="scr-pin">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="abrand">
+        <div class="mono-n">N</div>
+        <div><b>NEVPAZ</b><span>Finanz-Cockpit</span></div>
+      </div>
+      <div class="atitle serif">Sicherheitscode</div>
+      <div class="asub">Bitte den 6-stelligen Code aus der<br>Authenticator-App eingeben.</div>
+      <form id="pin-form" novalidate>
+        <div class="fld">
+          <label for="pin-code">Code</label>
+          <input id="pin-code" class="codein" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" autofocus placeholder="······">
+        </div>
+        <button class="btn gold" id="pin-btn" data-label="Entsperren" type="submit">Entsperren</button>
+      </form>
+      <div class="err" id="err-pin"></div>
+      <button class="alink" id="pin-cancel" type="button">Abbrechen &amp; abmelden</button>
+      <div class="afoot">🔐 Stufe 2 von 2 · aal2</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="scr" id="scr-app">
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="m">N</div><div><b>NEVPAZ</b><span>Finanz-Cockpit</span></div></div>
+    <nav class="nav" id="nav">
+      <div class="grp">Überblick</div>
+      <a data-t="ov" class="on"><span class="i">◈</span>Übersicht</a>
+      <div class="grp">PHI · Live</div>
+      <a data-t="pat"><span class="i">🔎</span>Patientensuche</a>
+      <a data-t="re"><span class="i">🧾</span>Rechnungsausgang</a>
+      <a data-t="za"><span class="i">🏦</span>Zahlungen &amp; Konto</a>
+      <a data-t="mahn"><span class="i">⚖️</span>Mahnjournal</a>
+    </nav>
+    <div class="sfoot"><span class="pulse"></span>Live-PHI-Proxy aktiv<br>Supabase EU · aal2-geschützt</div>
+  </aside>
+  <main>
+    <div class="hero">
+      <div class="hctrl">
+        <span class="chip" id="badge-mock" style="display:none">🧪 Vorschau — Beispieldaten</span>
+        <span class="chip" id="badge-2fa">🔐 2FA aktiv</span>
+        <span class="huser" id="huser"></span>
+        <button class="btn ghostw" id="btn-logout" type="button">Abmelden</button>
+      </div>
+      <h1>Finanz-Cockpit</h1>
+      <div class="sub">Privatpraxis NEVPAZ · Aggregate pseudonymisiert aus Supabase (EU) · PHI live über den abgesicherten Proxy aus PAS Dr. Hammerl</div>
+      <div class="gline"></div>
+    </div>
+    <div class="wrap">
+      <section class="tab on" id="t-ov">
+        <h2 class="tt">Übersicht</h2>
+        <div class="ts">Aggregate direkt aus Supabase — pseudonymisiert, ohne Patientendaten</div>
+        <div class="tabbody" id="body-ov"></div>
+      </section>
+      <section class="tab" id="t-pat">
+        <h2 class="tt">Patientensuche</h2>
+        <div class="ts">Live-Suche im PAS (Name oder Aktenzeichen) — Ergebnisse werden nur angezeigt, nie gespeichert</div>
+        <div class="tabbody" id="body-pat"></div>
+      </section>
+      <section class="tab" id="t-re">
+        <h2 class="tt">Rechnungsausgang</h2>
+        <div class="ts">Rechnungen live aus PAS · Filter wirken clientseitig auf die geladenen Zeilen</div>
+        <div class="tabbody" id="body-re"></div>
+      </section>
+      <section class="tab" id="t-za">
+        <h2 class="tt">Zahlungen &amp; Konto</h2>
+        <div class="ts">Buchungen (Kontobewegungen) live aus PAS</div>
+        <div class="tabbody" id="body-za"></div>
+      </section>
+      <section class="tab" id="t-mahn">
+        <h2 class="tt">Mahnjournal</h2>
+        <div class="ts">Offene Posten je Mahnstufe — live aus PAS, mit Beträgen und Fallzahlen</div>
+        <div class="tabbody" id="body-mahn"></div>
+      </section>
+    </div>
+    <div class="pfoot">🔒 PHI wird live geladen und nie gespeichert. · Zugriff nur mit Zwei-Faktor-Authentifizierung (aal2) · Supabase EU</div>
+  </main>
+</div>
+</div>
+
+<script type="module">
+/* =====================================================================
+   NEVPAZ Finanz-Cockpit — Web-App (Supabase-Auth + TOTP-2FA + PHI-Proxy)
+   Eine Datei, kein Build-Step. Alle Daten-Renderings XSS-sicher über
+   textContent/createElement — niemals innerHTML mit Fremddaten.
+   ===================================================================== */
+
+// ---------------- Konfiguration ----------------
+const SUPABASE_URL = "https://iumlhsmbnfdzfxagkjpl.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1bWxoc21ibmZkemZ4YWdranBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MDk2NTcsImV4cCI6MjA4MTI4NTY1N30.Y_fyaxeZp4jT_zftiV5argJfFIM39Ib6sbkB87i5gH4";
+const PROXY_URL = "https://iumlhsmbnfdzfxagkjpl.supabase.co/functions/v1/fin-phi-proxy";
+const PAS_CLIENT_ID = "22850";
+
+/* ============== UI-VORSCHAU-MODUS (?mock=1) ==============
+   Reiner Anzeige-Modus mit Beispieldaten: KEIN Login, KEINE
+   Supabase-Abfragen, NIEMALS fetch zum PROXY_URL (Guards in
+   pasCall/fetchTable/openPdf). Nur für Design-/UI-Prüfung.  */
+const MOCK = new URLSearchParams(location.search).get('mock') === '1';
+
+// ---------------- Supabase lazy laden (ES-Modul via esm.sh) ----------------
+let sb = null;
+const sbP = MOCK
+  ? Promise.resolve(null)
+  : import("https://esm.sh/@supabase/supabase-js@2")
+      .then(m => m.createClient(SUPABASE_URL, SUPABASE_ANON_KEY))
+      .catch(() => null); // Fehler wird bei Verwendung deutsch gemeldet
+
+async function getSb(){
+  const c = await sbP;
+  if (!c) throw new Error("Die Supabase-Bibliothek konnte nicht geladen werden — bitte Internetverbindung prüfen und die Seite neu laden.");
+  return c;
+}
+
+// ---------------- DOM- & Format-Helfer ----------------
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function elx(tag, cls, text){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+const F   = (x,d=0) => new Intl.NumberFormat('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}).format((x==null||isNaN(x))?0:x);
+const EUR = x => new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format((x==null||isNaN(x))?0:x);
+const K   = x => { const a=Math.abs(+x||0); return a>=1000 ? F(x/1000, a>=100000?0:1)+'k' : F(x); };
+
+function decodeEnt(s){
+  return String(s==null?'':s)
+    .replace(/&auml;/g,'ä').replace(/&ouml;/g,'ö').replace(/&uuml;/g,'ü')
+    .replace(/&Auml;/g,'Ä').replace(/&Ouml;/g,'Ö').replace(/&Uuml;/g,'Ü')
+    .replace(/&szlig;/g,'ß').replace(/&amp;/g,'&');
+}
+function parseDateAny(v){
+  if (v == null) return null;
+  if (typeof v === 'number'){ if (v > 1e12) return new Date(v); if (v > 1e9) return new Date(v*1000); return null; }
+  if (typeof v !== 'string') return null;
+  let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = v.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  return null;
+}
+function localIso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function deDate(v){
+  const d = parseDateAny(v);
+  if (!d) return String(v==null?'—':v);
+  return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+}
+function deNum(s){
+  if (typeof s !== 'string') return null;
+  const t = s.trim();
+  if (/^-?[\d.]{1,12},\d{1,2}$/.test(t)) return parseFloat(t.replace(/\./g,'').replace(',','.'));
+  if (/^-?\d+(\.\d+)?$/.test(t)) return parseFloat(t);
+  return null;
+}
+function deb(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+// ---------------- Screens & Fehlertexte ----------------
+function showScreen(id){
+  $$('.scr').forEach(s => s.classList.toggle('on', s.id === 'scr-'+id));
+  if (id === 'pin')   setTimeout(()=>{ const i=$('#pin-code');   if(i){ i.value=''; i.focus(); } }, 80);
+  if (id === 'login') setTimeout(()=>{ const i=$('#login-pass'); if(i) i.focus(); }, 80);
+}
+function setErr(scope, msg){
+  const e = $('#err-'+scope); if (!e) return;
+  e.textContent = msg || '';
+  e.classList.toggle('on', !!msg);
+}
+function busy(btnId, on, label){
+  const b = $('#'+btnId); if (!b) return;
+  b.disabled = !!on;
+  b.textContent = on ? (label || 'Bitte warten …') : (b.dataset.label || b.textContent);
+}
+function friendly(e){
+  const m = String((e && (e.message || e.error_description || e.msg)) || e || '');
+  if (/invalid login credentials/i.test(m)) return 'E-Mail oder Passwort ist falsch — bitte erneut versuchen.';
+  if (/email not confirmed/i.test(m)) return 'Diese E-Mail-Adresse ist noch nicht bestätigt.';
+  if (/invalid (totp|code)|code (is )?invalid|invalid one[- ]?time|otp/i.test(m)) return 'Der Code ist ungültig oder abgelaufen — bitte den aktuellen Code aus der Authenticator-App eingeben.';
+  if (/challenge.*expired|expired/i.test(m)) return 'Der Vorgang ist abgelaufen — bitte erneut versuchen.';
+  if (/rate ?limit|too many/i.test(m)) return 'Zu viele Versuche — bitte einen Moment warten und erneut versuchen.';
+  if (/failed to fetch|networkerror|network|load failed/i.test(m)) return 'Netzwerkfehler — bitte Internetverbindung prüfen und erneut versuchen.';
+  return m || 'Unbekannter Fehler — bitte erneut versuchen.';
+}
+function toast(msg){
+  const t = elx('div','toast', msg);
+  document.body.append(t);
+  setTimeout(()=>t.remove(), 5200);
+}
+
+// ---------------- Ladezustände / Fehlerboxen ----------------
+function spin(container, text){
+  container.textContent = '';
+  const w = elx('div','spinwrap');
+  w.append(elx('div','spinner'), elx('span', null, text || 'Wird geladen …'));
+  container.append(w);
+}
+function empty(container, text){
+  container.textContent = '';
+  container.append(elx('div','empty', text || 'Keine Daten vorhanden.'));
+}
+function errBox(container, msg, retryFn){
+  container.textContent = '';
+  const b = elx('div','errbox');
+  b.append(elx('div', null, '⚠️ ' + msg));
+  if (retryFn){
+    const btn = elx('button','btn ghost sm','Erneut versuchen');
+    btn.type = 'button';
+    btn.onclick = retryFn;
+    b.append(btn);
+  }
+  container.append(b);
+}
+function rawBox(container, raw){
+  container.textContent = '';
+  const card = elx('div','card');
+  card.append(elx('h3', null, 'Unstrukturierte Antwort'), elx('div','cs','PAS lieferte keine JSON-Tabelle — Rohtext (gekürzt):'));
+  const pre = elx('pre','raw');
+  const t = String(raw);
+  pre.textContent = t.length > 4000 ? t.slice(0,4000)+' …' : t;
+  card.append(pre);
+  container.append(card);
+}
+
+// ---------------- Chart-Setup (NEO-Balken, Wert-Labels) ----------------
+const HASCHART = typeof Chart !== 'undefined';
+const C = {navy:'#132038',navy2:'#25406B',gold:'#C6A15B',gold2:'#E0C583',goldd:'#A6863F',grn:'#2F7D5B',grn2:'#48A57C',red:'#C0473E',reds:'#D98079'};
+const STUFEN_FARBEN = ['#5D7C2D','#B2D281','#C6A15B','#D98079','#C0473E','#8E2F28'];
+
+function shade(hex, p){
+  if (typeof hex !== 'string') return hex;
+  let h = hex.trim();
+  if (h[0] !== '#') return h;
+  h = h.slice(1);
+  if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+  const n = parseInt(h, 16);
+  if (isNaN(n)) return hex;
+  const cl = v => Math.max(0, Math.min(255, v));
+  return 'rgb('+cl((n>>16)+p)+','+cl(((n>>8)&255)+p)+','+cl((n&255)+p)+')';
+}
+if (HASCHART){
+  Chart.defaults.font.family = "'DM Sans',sans-serif";
+  Chart.defaults.color = '#93805A';
+  Chart.defaults.font.size = 11;
+  Chart.defaults.layout.padding = {top:22, right:14, left:4, bottom:0};
+  // Kleines Inline-Plugin: permanente Wert-Labels über den Balken
+  Chart.register({
+    id: 'vlbl',
+    afterDatasetsDraw(c, _a, o){
+      if (!o || !o.on) return;
+      const ctx = c.ctx;
+      ctx.save();
+      ctx.font = "600 10.5px 'JetBrains Mono',monospace";
+      ctx.fillStyle = '#132038';
+      ctx.textAlign = 'center';
+      c.data.datasets.forEach((ds, di)=>{
+        const meta = c.getDatasetMeta(di);
+        if (meta.hidden) return;
+        if (meta.type !== 'bar' && !o.line) return;
+        meta.data.forEach((pt, i)=>{
+          const v = ds.data[i];
+          if (v == null) return;
+          ctx.fillText(o.fmt ? o.fmt(v) : String(v), pt.x, pt.y - 7);
+        });
+      });
+      ctx.restore();
+    }
+  });
+}
+// NEO-Stil: schmale Balken, oben gerundet, vertikaler Verlauf hell→dunkel
+const NEO  = { borderRadius:8, borderSkipped:'bottom', maxBarThickness:26, barPercentage:.5, categoryPercentage:.55 };
+const ANIM = { duration:900, easing:'easeOutQuart', delay:(c)=> (c.type==='data' && c.mode==='default') ? c.dataIndex*90 : 0 };
+function neoBg(base){
+  return (c)=>{
+    const col = Array.isArray(base) ? (base[c.dataIndex % base.length] || C.gold) : base;
+    const area = c.chart.chartArea;
+    if (!area) return col;
+    const g = c.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0, shade(col, 30));
+    g.addColorStop(1, shade(col, -24));
+    return g;
+  };
+}
+function mkScales(){
+  return {
+    y:{grid:{color:'rgba(19,32,56,.06)'}, border:{display:false}, ticks:{callback:v=>K(v)}},
+    x:{grid:{display:false}, border:{display:false}}
+  };
+}
+const CHARTS = {};
+function mk(id, cfg){
+  const cv = document.getElementById(id);
+  if (!cv) return;
+  if (!HASCHART){
+    cv.replaceWith(elx('div','empty','Diagramm-Bibliothek (Chart.js) nicht geladen — bitte Internetverbindung prüfen.'));
+    return;
+  }
+  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+  cfg.options = cfg.options || {};
+  cfg.options.maintainAspectRatio = false;
+  cfg.options.responsive = true;
+  CHARTS[id] = new Chart(cv, cfg);
+}
+function chartCard(title, sub, canvasId, small){
+  const card = elx('div','card');
+  card.append(elx('h3', null, title), elx('div','cs', sub));
+  const box = elx('div','chartbox' + (small?' sm':''));
+  const cv = document.createElement('canvas');
+  cv.id = canvasId;
+  box.append(cv);
+  card.append(box);
+  return card;
+}
+function kpiCard(cls, icon, label, value, foot){
+  const card = elx('div','card kpi ' + cls);
+  card.append(elx('div','acc', icon), elx('div','lab', label), elx('div','val', value), elx('div','foot', foot));
+  return card;
+}
+
+// ---------------- Auth-Fluss ----------------
+let pinFactorId = null;
+let enrollFactorId = null;
+
+async function route(){
+  const { data } = await sb.auth.getSession();
+  if (!data || !data.session){ showScreen('login'); return; }
+  const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.currentLevel === 'aal2'){ await enterApp(); return; }
+  await gotoMfa();
+}
+async function gotoMfa(){
+  const { data, error } = await sb.auth.mfa.listFactors();
+  if (error) throw error;
+  const all = (data && data.all) || [];
+  const verified = ((data && data.totp) || []).find(f => f.status === 'verified')
+    || all.find(f => f.factor_type === 'totp' && f.status === 'verified')
+    || null;
+  if (verified){
+    pinFactorId = verified.id;
+    showScreen('pin');
+  } else {
+    showScreen('enroll');
+    await startEnroll(all);
+  }
+}
+async function startEnroll(all){
+  setErr('enroll','');
+  $('#enroll-retry').style.display = 'none';
+  const img = $('#enroll-qr');
+  img.removeAttribute('src');
+  $('#qr-spin').style.display = 'block';
+  $('#enroll-secret').textContent = '…';
+  try{
+    if (!all){
+      const r = await sb.auth.mfa.listFactors();
+      all = (r.data && r.data.all) || [];
+    }
+    // Alte, nie bestätigte TOTP-Faktoren entfernen (verhindert Namenskonflikt beim erneuten Enrollment)
+    for (const f of all.filter(x => x.factor_type === 'totp' && x.status !== 'verified')){
+      try{ await sb.auth.mfa.unenroll({ factorId: f.id }); }catch(_e){ /* unkritisch */ }
+    }
+    const { data, error } = await sb.auth.mfa.enroll({ factorType:'totp', friendlyName:'NEVPAZ Cockpit' });
+    if (error) throw error;
+    enrollFactorId = data.id;
+    img.onload = ()=>{ $('#qr-spin').style.display = 'none'; };
+    img.src = data.totp.qr_code;                 // QR-Code (Daten-URI von Supabase)
+    $('#enroll-secret').textContent = data.totp.secret; // kopierbarer Fallback
+    setTimeout(()=>{ const i=$('#enroll-code'); if(i){ i.value=''; i.focus(); } }, 120);
+  }catch(e){
+    $('#qr-spin').style.display = 'none';
+    setErr('enroll', friendly(e) + ' — Hinweis: TOTP-MFA muss im Supabase-Dashboard unter Authentication → Multi-Factor aktiviert sein.');
+    $('#enroll-retry').style.display = 'block';
+  }
+}
+async function verifyCode(factorId, code){
+  const { data: ch, error: e1 } = await sb.auth.mfa.challenge({ factorId });
+  if (e1) throw e1;
+  const { error: e2 } = await sb.auth.mfa.verify({ factorId, challengeId: ch.id, code });
+  if (e2) throw e2;
+  const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (!aal || aal.currentLevel !== 'aal2') throw new Error('Sicherheitsstufe aal2 nicht erreicht — bitte erneut anmelden.');
+  await enterApp();
+}
+async function doLogout(){
+  try{ if (sb) await sb.auth.signOut(); }catch(_e){}
+  // PHI-Hygiene: angezeigte Daten und Diagramme aus dem DOM entfernen
+  Object.keys(CHARTS).forEach(k => { try{ CHARTS[k].destroy(); }catch(_e){} delete CHARTS[k]; });
+  $$('.tabbody').forEach(b => { b.textContent = ''; });
+  loaded = {};
+  setErr('login','');
+  showScreen('login');
+}
+
+// ---------------- App-Shell (Tabs) ----------------
+let loaded = {};
+let appWired = false;
+const LOADERS = { ov: loadOV, pat: initPat, re: loadRE, za: loadZA, mahn: loadMJ };
+
+async function enterApp(){
+  if (!MOCK){
+    // Harte Sperre: App nur auf aal2 (RLS/Proxy erzwingen das serverseitig ebenfalls)
+    const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!aal || aal.currentLevel !== 'aal2'){ await gotoMfa(); return; }
+  }
+  $('#badge-2fa').style.display  = MOCK ? 'none' : 'inline-flex';
+  $('#badge-mock').style.display = MOCK ? 'inline-flex' : 'none';
+  $('#btn-logout').style.display = MOCK ? 'none' : 'inline-flex';
+  if (!MOCK){
+    try{
+      const { data } = await sb.auth.getSession();
+      $('#huser').textContent = (data && data.session && data.session.user && data.session.user.email) || '';
+    }catch(_e){}
+  } else {
+    $('#huser').textContent = '';
+  }
+  if (!appWired){
+    appWired = true;
+    $$('#nav a').forEach(a => a.addEventListener('click', ()=>activateTab(a.dataset.t)));
+    $('#btn-logout').addEventListener('click', doLogout);
+  }
+  loaded = {};
+  showScreen('app');
+  activateTab('ov');
+}
+function activateTab(t){
+  $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.t === t));
+  $$('.tab').forEach(s => s.classList.toggle('on', s.id === 't-'+t));
+  if (!loaded[t]){ loaded[t] = true; LOADERS[t](); }
+}
+
+// ---------------- Supabase-Aggregate (Tab „Übersicht") ----------------
+async function fetchTable(t){
+  if (MOCK) return JSON.parse(JSON.stringify(MOCKDB[t] || [])); // Vorschau: nur Beispieldaten
+  sb = await getSb();
+  let q = sb.from(t).select('*').limit(4000);
+  if (t === 'fin_pas_kpi')    q = sb.from(t).select('*').order('stichtag', {ascending:false}).limit(4000);
+  if (t === 'fin_umsatz_tag') q = sb.from(t).select('*').order('datum',    {ascending:false}).limit(4000);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+function sortMonths(rows, stichtag){
+  const M = {jan:1,feb:2,'mär':3,mrz:3,mae:3,apr:4,mai:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dez:12};
+  const sm = (stichtag && /^\d{4}-\d{2}/.test(stichtag)) ? +stichtag.slice(5,7) : (new Date()).getMonth()+1;
+  return rows
+    .map(r => {
+      const nm = decodeEnt(String(r.periode || '')).toLowerCase().slice(0,3);
+      const n = M[nm] || 0;
+      return Object.assign({}, r, { _n:n, _ord: n > sm ? n-12 : n });
+    })
+    .filter(r => r._n > 0)
+    .sort((a,b) => a._ord - b._ord);
+}
+async function loadOV(){
+  const body = $('#body-ov');
+  spin(body, 'Aggregate werden aus Supabase geladen …');
+  try{
+    const [kpi, tage] = await Promise.all([fetchTable('fin_pas_kpi'), fetchTable('fin_umsatz_tag')]);
+    renderOV(body, kpi, tage);
+  }catch(e){
+    errBox(body, 'Die Übersicht konnte nicht geladen werden: ' + friendly(e), ()=>loadOV());
+  }
+}
+function renderOV(body, kpi, tage){
+  body.textContent = '';
+  const st  = kpi.map(r => String(r.stichtag || '')).sort().pop() || '';
+  const cur = st ? kpi.filter(r => String(r.stichtag) === st) : kpi;
+  const oi  = cur.filter(r => r.kind === 'open_item')
+                 .sort((a,b) => String(a.periode).localeCompare(String(b.periode), undefined, {numeric:true}));
+  const tm  = sortMonths(cur.filter(r => r.kind === 'turnover_monthly'), st);
+
+  const clSum  = tage.reduce((s,r) => s + (+r.umsatz || 0), 0);
+  const oiSum  = oi.reduce((s,r) => s + (+r.betrag || 0), 0);
+  const oiCnt  = oi.reduce((s,r) => s + ((r.meta && +r.meta.count) || 0), 0);
+  const pasCur = tm.length ? tm[tm.length-1] : null;
+
+  // — 4 KPI-Karten —
+  const grid = elx('div','grid g4');
+  grid.append(
+    kpiCard('a-navy','◈','ClinicOS-Umsatz erfasst', EUR(clSum), F(tage.length) + ' Tage in der Zeitreihe'),
+    kpiCard('a-gold','🏛','PAS-Monatsumsatz', pasCur ? EUR(pasCur.betrag) : '—', pasCur ? ('aktuellster Monat: ' + decodeEnt(pasCur.periode)) : 'keine Monatsdaten'),
+    kpiCard('a-red','⚖','Offene Posten gesamt', EUR(oiSum), F(oiCnt) + ' Fälle · ' + oi.length + ' Mahnstufen'),
+    kpiCard('a-grn','◷','Datenstand', st ? deDate(st) : '—', 'Supabase EU · pseudonymisiert')
+  );
+  body.append(grid);
+
+  // — Charts —
+  const g2 = elx('div','grid g2');
+  g2.style.marginTop = '22px';
+  const c1 = chartCard('Offene Posten nach Mahnstufe', 'PAS-Außenstände · Summe je Stufe', 'ovOI');
+  const c2 = chartCard('PAS · Monatsumsatz', 'fakturiert · letzte Monate', 'ovPM');
+  g2.append(c1, c2);
+  body.append(g2);
+  const c3 = chartCard('ClinicOS · Monatsleistung', 'Tagesumsätze, clientseitig auf Monate aggregiert', 'ovCL');
+  c3.style.marginTop = '22px';
+  body.append(c3);
+
+  if (!oi.length){
+    c1.querySelector('.chartbox').replaceWith(elx('div','empty','Noch keine Mahnstufen-Aggregate in Supabase.'));
+  } else {
+    const colors = oi.map((r,i) => (r.meta && r.meta.color) || STUFEN_FARBEN[i % STUFEN_FARBEN.length]);
+    mk('ovOI', {
+      type:'bar',
+      data:{ labels: oi.map(r => 'Stufe ' + r.periode),
+             datasets:[ Object.assign({ data: oi.map(r => +r.betrag || 0), backgroundColor: neoBg(colors) }, NEO) ] },
+      options:{ animation:ANIM, scales:mkScales(),
+        plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K},
+          tooltip:{ callbacks:{ afterLabel:(c)=>{
+            const m = oi[c.dataIndex] && oi[c.dataIndex].meta || {};
+            const parts = [];
+            if (m.count != null) parts.push(F(m.count) + ' Fälle');
+            if (m.name) parts.push(decodeEnt(String(m.name)));
+            return parts.join(' · ');
+          }}}}}
+    });
+  }
+  if (!tm.length){
+    c2.querySelector('.chartbox').replaceWith(elx('div','empty','Noch keine PAS-Monatsumsätze in Supabase.'));
+  } else {
+    mk('ovPM', {
+      type:'bar',
+      data:{ labels: tm.map(r => decodeEnt(r.periode)),
+             datasets:[ Object.assign({ data: tm.map(r => +r.betrag || 0), backgroundColor: neoBg(C.gold) }, NEO) ] },
+      options:{ animation:ANIM, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K} } }
+    });
+  }
+  const byM = {};
+  tage.forEach(r => {
+    const k = String(r.datum || '').slice(0,7);
+    if (k.length === 7) byM[k] = (byM[k] || 0) + (+r.umsatz || 0);
+  });
+  const months = Object.keys(byM).sort();
+  if (!months.length){
+    c3.querySelector('.chartbox').replaceWith(elx('div','empty','Noch keine ClinicOS-Tagesumsätze in Supabase.'));
+  } else {
+    const labels = months.map(k => {
+      const d = new Date(k + '-01T00:00:00');
+      return isNaN(+d) ? k : d.toLocaleDateString('de-DE', {month:'short', year:'2-digit'});
+    });
+    mk('ovCL', {
+      type:'bar',
+      data:{ labels, datasets:[ Object.assign({ data: months.map(k => byM[k]), backgroundColor: neoBg(C.navy) }, NEO) ] },
+      options:{ animation:ANIM, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K} } }
+    });
+  }
+}
+
+// ---------------- PHI-Proxy-Schicht ----------------
+async function getToken(){
+  sb = await getSb();
+  const { data } = await sb.auth.getSession();
+  const t = data && data.session && data.session.access_token;
+  if (!t) throw new Error('Keine aktive Sitzung — bitte neu anmelden.');
+  return t;
+}
+async function pasCall(payload){
+  if (MOCK) return mockPas(payload); // Vorschau-Guard: NIE echte Proxy-Calls
+  const token = await getToken();
+  let res;
+  try{
+    res = await fetch(PROXY_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+      body: JSON.stringify(payload)
+    });
+  }catch(_e){
+    throw new Error('Netzwerkfehler beim PHI-Proxy — bitte Verbindung prüfen und erneut versuchen.');
+  }
+  if (res.status === 401 || res.status === 403){
+    throw new Error('Zugriff verweigert (HTTP ' + res.status + ') — die Sitzung ist ggf. abgelaufen. Bitte ab- und mit 2FA neu anmelden.');
+  }
+  let out = null;
+  try{ out = await res.json(); }
+  catch(_e){ throw new Error('Die Antwort des Proxys war nicht lesbar (HTTP ' + res.status + ').'); }
+  if (!res.ok){
+    const detail = out && (out.error || out.message);
+    throw new Error('Proxy-Fehler (HTTP ' + res.status + ')' + (detail ? ': ' + String(detail).slice(0,200) : '.'));
+  }
+  return out; // {ok, status, data}
+}
+function extractRows(d){
+  if (Array.isArray(d)) return d.filter(x => x != null && typeof x === 'object');
+  if (d && typeof d === 'object'){
+    for (const k of ['rows','content','items','data','list','results','entries','values']){
+      if (Array.isArray(d[k])) return d[k].filter(x => x != null && typeof x === 'object');
+    }
+    if (typeof d.raw === 'string') return [];
+    for (const v of Object.values(d)){
+      if (Array.isArray(v) && v.length && typeof v[0] === 'object') return v.filter(x => x != null);
+    }
+    if (Object.keys(d).length) return [d];
+  }
+  return [];
+}
+// Listen-Strategie lt. Proxy-Protokoll: erst mode:"json" mit {}, bei ok=false/leer → Retry mode:"form" mit clientIds
+async function loadList(path, extra){
+  extra = extra || {};
+  const pick = r => ({
+    ok:   !!(r && r.ok !== false),
+    rows: (r && r.ok !== false) ? extractRows(r.data) : [],
+    raw:  (r && r.data && typeof r.data.raw === 'string') ? r.data.raw : null,
+    status: r && r.status
+  });
+  const A = pick(await pasCall({ op:'pas', method:'POST', path, mode:'json', body: Object.assign({}, extra) }));
+  if (A.ok && A.rows.length) return A;
+  const B = pick(await pasCall({ op:'pas', method:'POST', path, mode:'form', body: Object.assign({ clientIds: PAS_CLIENT_ID }, extra) }));
+  if (!A.ok && !B.ok){
+    throw new Error('PAS meldet einen Fehler (HTTP ' + (B.status || A.status || '?') + ') — bitte später erneut versuchen.');
+  }
+  if (B.rows.length) return B;
+  if (A.ok && (A.rows.length || A.raw)) return A;
+  return B.ok ? B : A;
+}
+
+// ---------------- Resiliente Renderer (Tabelle / Detail / Filter) ----------------
+const HMAP = {
+  invoicenumber:'Rechnungsnr.', invoiceno:'Rechnungsnr.', number:'Nummer',
+  patientname:'Patient', name:'Patient', patient:'Patient',
+  az:'Aktenzeichen', filenumber:'Aktenzeichen', recordtoken:'Aktenzeichen',
+  amount:'Betrag', sumgross:'Betrag (brutto)', gross:'Betrag (brutto)', sumnet:'Netto', net:'Netto',
+  openamount:'Offen', open:'Offen',
+  dunninglevel:'Mahnstufe',
+  date:'Datum', invoicedate:'Datum', created:'Datum', createdat:'Angelegt', bookingdate:'Buchungsdatum', entrydate:'Datum',
+  duedate:'Fällig am', count:'Anzahl', status:'Status',
+  firstname:'Vorname', lastname:'Nachname', birthdate:'Geburtsdatum',
+  description:'Beschreibung', text:'Text', type:'Typ', id:'ID', currency:'Währung',
+  clientid:'Mandant', year:'Jahr', month:'Monat', color:'Farbe',
+  stufe:'Stufe', bezeichnung:'Bezeichnung', anzahl:'Anzahl', summe:'Summe offen'
+};
+function germanHeader(k){
+  const hit = HMAP[String(k).toLowerCase()];
+  if (hit) return hit;
+  const s = String(k);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+const PRIO_KEYS = ['invoiceNumber','invoiceNo','number','patientName','name','patient','firstName','lastName','az','fileNumber','recordToken','invoiceDate','date','datum','bookingDate','created','createdAt','dueDate','amount','sumGross','gross','openAmount','open','dunningLevel','status','count','type','text','description'];
+function orderKeys(keys){
+  const out = [];
+  PRIO_KEYS.forEach(p => {
+    const hit = keys.find(k => k.toLowerCase() === p.toLowerCase());
+    if (hit && !out.includes(hit)) out.push(hit);
+  });
+  keys.forEach(k => { if (!out.includes(k)) out.push(k); });
+  return out;
+}
+const MONEYKEY = /amount|gross|brutto|netto|(^|[a-z])net$|sum|betrag|saldo|balance|price|fee|total|value|^open$/i;
+const NOTMONEY = /count|level|number|nummer|(^|_)id$|anzahl|jahr|year|month|monat|stufe/i;
+function fmtVal(k, v){
+  const key = String(k);
+  if (v == null || v === '') return { text:'—' };
+  if (typeof v === 'boolean') return { text: v ? 'ja' : 'nein' };
+  if (typeof v === 'number'){
+    if (MONEYKEY.test(key) && !NOTMONEY.test(key)) return { text: EUR(v), num:true };
+    return { text: F(v, Number.isInteger(v) ? 0 : 2), num:true };
+  }
+  if (typeof v === 'string'){
+    if (/^\d{4}-\d{2}-\d{2}([T ].*)?$/.test(v)) return { text: deDate(v) };
+    if (MONEYKEY.test(key) && !NOTMONEY.test(key)){
+      const n = deNum(v);
+      if (n != null) return { text: EUR(n), num:true };
+    }
+    return { text: decodeEnt(v) };
+  }
+  return { text: String(v) };
+}
+function detailsJson(v){
+  const d = document.createElement('details');
+  d.append(elx('summary', null, 'Details'));
+  const pre = document.createElement('pre');
+  let t = '';
+  try{ t = JSON.stringify(v, null, 2); }catch(_e){ t = String(v); }
+  pre.textContent = t.length > 4000 ? t.slice(0,4000) + ' …' : t;
+  d.append(pre);
+  return d;
+}
+function cellFor(k, v){
+  const td = document.createElement('td');
+  if (v != null && typeof v === 'object'){ td.append(detailsJson(v)); return td; }
+  const f = fmtVal(k, v);
+  td.textContent = f.text;
+  if (f.num) td.className = 'num';
+  return td;
+}
+function renderRows(container, rows, onRow, emptyText){
+  container.textContent = '';
+  if (!rows.length){ empty(container, emptyText || 'Keine Daten.'); return; }
+  const keys  = orderKeys(Object.keys(rows[0]));
+  const shown = keys.slice(0, 12);
+  const wrap  = elx('div','tscroll');
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const trh   = document.createElement('tr');
+  shown.forEach(k => {
+    const th = document.createElement('th');
+    th.textContent = germanHeader(k);
+    const probe = fmtVal(k, rows[0][k]);
+    if (probe.num) th.className = 'num';
+    trh.append(th);
+  });
+  thead.append(trh);
+  table.append(thead);
+  const tbody = document.createElement('tbody');
+  const cap = rows.slice(0, 500);
+  cap.forEach(r => {
+    const tr = document.createElement('tr');
+    if (onRow){ tr.className = 'clickable'; tr.addEventListener('click', ()=>onRow(r)); }
+    shown.forEach(k => tr.append(cellFor(k, r[k])));
+    tbody.append(tr);
+  });
+  table.append(tbody);
+  wrap.append(table);
+  container.append(wrap);
+  if (rows.length > 500) container.append(elx('div','finfo','Anzeige auf die ersten 500 Zeilen begrenzt — bitte Filter nutzen.'));
+}
+function findDocId(r){
+  for (const k of ['documentId','document_id','documentUuid','documentGuid','documentID','fileId','file_id','fileUuid','pdfId','printFileId','archiveId']){
+    if (r[k] != null && r[k] !== '') return r[k];
+  }
+  for (const k of ['document','file','pdf']){
+    const d = r[k];
+    if (d && typeof d === 'object' && d.id != null) return d.id;
+  }
+  for (const k of ['documents','files']){
+    const a = r[k];
+    if (Array.isArray(a) && a[0] && a[0].id != null) return a[0].id;
+  }
+  return null;
+}
+async function openPdf(id){
+  if (MOCK){ toast('Im Vorschau-Modus ist der PDF-Abruf deaktiviert.'); return; } // Vorschau-Guard
+  const w = window.open('about:blank', '_blank'); // synchron öffnen (Popup-Blocker)
+  try{
+    const token = await getToken();
+    const url = PROXY_URL + '?op=download&path=document/download/' + encodeURIComponent(String(id));
+    const res = await fetch(url, { headers:{ 'Authorization':'Bearer ' + token } });
+    if (!res.ok) throw new Error('Download fehlgeschlagen (HTTP ' + res.status + ').');
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob.type ? blob : new Blob([blob], {type:'application/pdf'}));
+    if (w) w.location.href = objUrl; else window.open(objUrl, '_blank');
+  }catch(e){
+    if (w){ try{ w.close(); }catch(_e){} }
+    toast('Original-PDF konnte nicht geöffnet werden: ' + friendly(e));
+  }
+}
+function showDetail(container, row, title){
+  container.textContent = '';
+  const card = elx('div','card detail');
+  const head = elx('div','dhead');
+  head.append(elx('h3', null, title));
+  const x = elx('button','xbtn','✕');
+  x.type = 'button';
+  x.addEventListener('click', ()=>{ container.textContent = ''; });
+  head.append(x);
+  card.append(head);
+  const dl = elx('div','dgrid');
+  Object.keys(row).forEach(k => {
+    dl.append(elx('div','dt', germanHeader(k)));
+    const dd = elx('div','dd');
+    const v = row[k];
+    if (v != null && typeof v === 'object') dd.append(detailsJson(v));
+    else dd.textContent = fmtVal(k, v).text;
+    dl.append(dd);
+  });
+  card.append(dl);
+  const doc = findDocId(row);
+  if (doc != null){
+    const acts = elx('div','dactions');
+    const b = elx('button','btn gold sm','📄 Original-PDF öffnen');
+    b.type = 'button';
+    b.style.width = 'auto';
+    b.addEventListener('click', ()=>openPdf(doc));
+    acts.append(b);
+    card.append(acts);
+  }
+  container.append(card);
+  try{ card.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(_e){}
+}
+
+// ---------------- Clientseitige Filter ----------------
+function makeFilters(opts, onChange){
+  const bar = elx('div','fbar');
+  const state = { q:'', von:'', bis:'', stufe:'alle', status:'alle' };
+  function fld(labelText, input, grow){
+    const w = elx('label','ff' + (grow ? ' grow' : ''));
+    w.append(elx('span', null, labelText), input);
+    return w;
+  }
+  if (opts.text){
+    const i = document.createElement('input');
+    i.type = 'search';
+    i.placeholder = 'Freitext — Name, Nummer, Betrag …';
+    i.addEventListener('input', deb(()=>{ state.q = i.value.trim().toLowerCase(); onChange(state); }, 200));
+    bar.append(fld('Suche', i, true));
+  }
+  if (opts.dates){
+    const a = document.createElement('input'); a.type = 'date';
+    a.addEventListener('change', ()=>{ state.von = a.value; onChange(state); });
+    const b = document.createElement('input'); b.type = 'date';
+    b.addEventListener('change', ()=>{ state.bis = b.value; onChange(state); });
+    bar.append(fld('Zeitraum von', a), fld('bis', b));
+  }
+  if (opts.dunning){
+    const s = document.createElement('select');
+    ['alle','0','1','2','3','4','5'].forEach(v => {
+      const o = document.createElement('option');
+      o.value = v;
+      o.textContent = v === 'alle' ? 'Alle' : 'Stufe ' + v;
+      s.append(o);
+    });
+    s.addEventListener('change', ()=>{ state.stufe = s.value; onChange(state); });
+    bar.append(fld('Mahnstufe', s));
+  }
+  if (opts.status){
+    const s = document.createElement('select');
+    [['alle','Alle'],['offen','offen'],['ausgeglichen','ausgeglichen']].forEach(([v,t]) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = t;
+      s.append(o);
+    });
+    s.addEventListener('change', ()=>{ state.status = s.value; onChange(state); });
+    bar.append(fld('Status', s));
+  }
+  return { el: bar, state };
+}
+function rowText(r){ try{ return JSON.stringify(r).toLowerCase(); }catch(_e){ return ''; } }
+function rowDate(r){
+  for (const k of ['invoiceDate','date','datum','bookingDate','entryDate','created','createdAt','createdOn','dueDate']){
+    if (r[k] != null){ const d = parseDateAny(r[k]); if (d) return d; }
+  }
+  for (const k of Object.keys(r)){
+    if (/date|datum/i.test(k)){ const d = parseDateAny(r[k]); if (d) return d; }
+  }
+  return null;
+}
+function rowDunning(r){
+  for (const k of Object.keys(r)){
+    if (/dunning|mahnstufe|mahn.?level/i.test(k)){
+      const n = Number(r[k]);
+      if (r[k] !== '' && r[k] != null && !isNaN(n)) return n;
+    }
+  }
+  return null;
+}
+function rowOpenAmount(r){
+  for (const k of ['openAmount','open','openSum','restbetrag','offen']){
+    if (typeof r[k] === 'number') return r[k];
+    if (typeof r[k] === 'string'){ const n = deNum(r[k]); if (n != null) return n; }
+  }
+  return null;
+}
+function rowStatus(r){
+  for (const k of Object.keys(r)){
+    if (/^status$|paymentstatus|^state$/i.test(k) && typeof r[k] === 'string'){
+      const l = r[k].toLowerCase();
+      if (/(offen|open|unpaid|due|teilw|partial)/.test(l)) return 'offen';
+      if (/(ausgegl|bezahlt|paid|settled|beglichen|closed|storn)/.test(l)) return 'ausgeglichen';
+    }
+  }
+  const oa = rowOpenAmount(r);
+  if (oa != null) return oa > 0.005 ? 'offen' : 'ausgeglichen';
+  if (typeof r.paid === 'boolean') return r.paid ? 'ausgeglichen' : 'offen';
+  return null;
+}
+// Regel: Ist ein Filter aktiv und das Merkmal in der Zeile nicht erkennbar, wird die Zeile ausgeblendet.
+function applyFilters(rows, f){
+  return rows.filter(r => {
+    if (f.q && !rowText(r).includes(f.q)) return false;
+    if (f.von || f.bis){
+      const d = rowDate(r);
+      if (!d) return false;
+      const iso = localIso(d);
+      if (f.von && iso < f.von) return false;
+      if (f.bis && iso > f.bis) return false;
+    }
+    if (f.stufe && f.stufe !== 'alle'){
+      const dl = rowDunning(r);
+      if (dl === null || String(dl) !== f.stufe) return false;
+    }
+    if (f.status && f.status !== 'alle'){
+      if (rowStatus(r) !== f.status) return false;
+    }
+    return true;
+  });
+}
+
+// ---------------- Tab B: Patientensuche (PHI, live) ----------------
+function initPat(){
+  const body = $('#body-pat');
+  body.textContent = '';
+  const form = elx('form','fbar');
+  const i = document.createElement('input');
+  i.type = 'search';
+  i.placeholder = 'Name oder Aktenzeichen …';
+  i.autocomplete = 'off';
+  const fw = elx('label','ff grow');
+  fw.append(elx('span', null, 'Suchbegriff'), i);
+  const btn = elx('button','btn gold sm','Suchen');
+  btn.type = 'submit';
+  btn.style.width = 'auto';
+  form.append(fw, btn);
+  const detail = elx('div');
+  const info = elx('div','finfo');
+  const out = elx('div');
+  out.append(elx('div','empty','Bitte Suchbegriff eingeben — die Suche läuft live gegen das PAS.'));
+  body.append(form, info, detail, out);
+
+  async function run(){
+    const q = i.value.trim();
+    if (!q){ info.textContent = ''; empty(out, 'Bitte einen Suchbegriff eingeben.'); return; }
+    detail.textContent = '';
+    info.textContent = '';
+    spin(out, 'Suche läuft — PAS wird live abgefragt …');
+    try{
+      // lt. Protokoll: query UND q im Body, json-Variante zuerst, dann form-Variante
+      const res = await loadList('invoice/search', { query:q, q:q });
+      if (!res.rows.length){
+        if (res.raw){ rawBox(out, res.raw); return; }
+        empty(out, 'Keine Treffer für „' + q + '“.');
+        return;
+      }
+      info.textContent = F(res.rows.length) + ' Treffer';
+      renderRows(out, res.rows, r => showDetail(detail, r, 'Datensatz'), 'Keine Treffer.');
+    }catch(e){
+      errBox(out, friendly(e), run);
+    }
+  }
+  form.addEventListener('submit', ev => { ev.preventDefault(); run(); });
+}
+
+// ---------------- Tab C: Rechnungsausgang (PHI, live) ----------------
+async function loadRE(){
+  const body = $('#body-re');
+  spin(body, 'Rechnungsausgang wird live aus PAS geladen …');
+  try{
+    const res = await loadList('invoice/list');
+    body.textContent = '';
+    if (!res.rows.length){
+      if (res.raw){ rawBox(body, res.raw); return; }
+      empty(body, 'Keine Rechnungen erhalten.');
+      return;
+    }
+    const detail = elx('div');
+    const info = elx('div','finfo');
+    const out = elx('div');
+    const { el: bar, state } = makeFilters({ text:true, dates:true, dunning:true, status:true }, ()=>rerender());
+    function rerender(){
+      const rows = applyFilters(res.rows, state);
+      info.textContent = F(rows.length) + ' von ' + F(res.rows.length) + ' Rechnungen';
+      renderRows(out, rows, r => showDetail(detail, r, 'Originalrechnung'), 'Keine Rechnung entspricht den gesetzten Filtern.');
+    }
+    body.append(bar, info, detail, out);
+    rerender();
+  }catch(e){
+    errBox(body, friendly(e), ()=>loadRE());
+  }
+}
+
+// ---------------- Tab D: Zahlungen & Konto (PHI, live) ----------------
+async function loadZA(){
+  const body = $('#body-za');
+  spin(body, 'Kontobewegungen werden live aus PAS geladen …');
+  try{
+    const res = await loadList('accounting-entry/list');
+    body.textContent = '';
+    if (!res.rows.length){
+      if (res.raw){ rawBox(body, res.raw); return; }
+      empty(body, 'Keine Buchungen erhalten.');
+      return;
+    }
+    const detail = elx('div');
+    const info = elx('div','finfo');
+    const out = elx('div');
+    const sums = elx('div','sumline');
+    const { el: bar, state } = makeFilters({ text:true, dates:true }, ()=>rerender());
+    function rerender(){
+      const rows = applyFilters(res.rows, state);
+      info.textContent = F(rows.length) + ' von ' + F(res.rows.length) + ' Buchungen';
+      renderRows(out, rows, r => showDetail(detail, r, 'Buchung'), 'Keine Buchung entspricht den gesetzten Filtern.');
+      // Summenzeile Ein-/Ausgänge, sofern Beträge erkennbar sind
+      sums.textContent = '';
+      let inn = 0, o = 0, found = 0;
+      rows.forEach(r => {
+        const a = rowAmount(r);
+        if (a != null && !isNaN(a)){ found++; if (a >= 0) inn += a; else o += a; }
+      });
+      if (found){
+        sums.style.display = 'flex';
+        const mkPart = (t, v, cls) => { const s = elx('span', cls); s.append(elx('b', null, t + ' ')); s.append(document.createTextNode(v)); return s; };
+        sums.append(
+          mkPart('Eingänge:', EUR(inn), 'pos'),
+          mkPart('Ausgänge:', EUR(Math.abs(o)), 'neg'),
+          mkPart('Saldo:', EUR(inn + o), (inn + o) >= 0 ? 'pos' : 'neg')
+        );
+      } else {
+        sums.style.display = 'none';
+      }
+    }
+    body.append(bar, info, sums, detail, out);
+    rerender();
+  }catch(e){
+    errBox(body, friendly(e), ()=>loadZA());
+  }
+}
+function rowAmount(r){
+  for (const k of ['amount','betrag','value','sumGross','gross','sum','total','saldo','net']){
+    if (typeof r[k] === 'number') return r[k];
+    if (typeof r[k] === 'string'){ const n = deNum(r[k]); if (n != null) return n; }
+  }
+  for (const k of Object.keys(r)){
+    if (/amount|betrag|gross|saldo/i.test(k)){
+      const v = r[k];
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string'){ const n = deNum(v); if (n != null) return n; }
+    }
+  }
+  return null;
+}
+
+// ---------------- Tab E: Mahnjournal (PHI, live) ----------------
+async function loadMJ(){
+  const body = $('#body-mahn');
+  spin(body, 'Mahnjournal wird live aus PAS geladen …');
+  try{
+    // Referenz-Call lt. Protokoll (multipart/form — funktioniert sicher)
+    const r = await pasCall({ op:'pas', method:'POST', path:'dashboard/statistic/open-item', mode:'form', body:{ clientIds: PAS_CLIENT_ID } });
+    if (r.ok === false) throw new Error('PAS meldet einen Fehler (HTTP ' + (r.status || '?') + ').');
+    const items = extractRows(r.data);
+    body.textContent = '';
+    if (!items.length){
+      empty(body, 'Keine Mahnjournal-Daten erhalten.');
+    } else {
+      const g2 = elx('div','grid g2');
+      const cChart = chartCard('Offene Posten je Mahnstufe', 'Summe (Balken) und Fallzahl (Linie) — live', 'mjChart');
+      const cTab = elx('div','card');
+      cTab.append(elx('h3', null, 'Stufen im Detail'), elx('div','cs','Beträge und Fallzahlen je Mahnstufe'));
+      const tabBox = elx('div');
+      cTab.append(tabBox);
+      g2.append(cChart, cTab);
+      body.append(g2);
+
+      const colors = items.map((x,i) => x.color || STUFEN_FARBEN[i % STUFEN_FARBEN.length]);
+      mk('mjChart', {
+        data:{
+          labels: items.map(x => 'Stufe ' + (x.dunningLevel != null ? x.dunningLevel : '?')),
+          datasets:[
+            Object.assign({ type:'bar', label:'Summe offen', data: items.map(x => +x.sumGross || 0), backgroundColor: neoBg(colors), order:2 }, NEO),
+            { type:'line', label:'Fälle', data: items.map(x => +x.count || 0), borderColor:C.navy2, backgroundColor:C.navy2, tension:.35, pointRadius:4, pointBackgroundColor:C.gold2, borderWidth:2.5, yAxisID:'y1', order:1 }
+          ]
+        },
+        options:{
+          animation:ANIM,
+          plugins:{ legend:{position:'top', labels:{usePointStyle:true, padding:12}}, vlbl:{on:true, fmt:K} },
+          scales: Object.assign(mkScales(), { y1:{ position:'right', grid:{display:false}, border:{display:false}, ticks:{precision:0} } })
+        }
+      });
+      const mini = items.map(x => ({
+        Stufe: String(x.dunningLevel != null ? x.dunningLevel : '?'),
+        Bezeichnung: decodeEnt(String(x.name || '—')),
+        Anzahl: +x.count || 0,
+        Summe: +x.sumGross || 0
+      }));
+      renderRows(tabBox, mini, null, 'Keine Stufen.');
+    }
+
+    // Ergänzend: Rechnungen mit Mahnstufe ≥ 1 (invoice/list, clientseitig gefiltert)
+    const sect = elx('div','card');
+    sect.style.marginTop = '22px';
+    sect.append(elx('h3', null, 'Gemahnte Rechnungen (Stufe ≥ 1)'), elx('div','cs','aus dem Rechnungsausgang · clientseitig gefiltert'));
+    const det = elx('div');
+    const box = elx('div');
+    sect.append(det, box);
+    body.append(sect);
+    spin(box, 'Rechnungen werden geladen …');
+    try{
+      const res = await loadList('invoice/list');
+      const rows = res.rows.filter(x => { const d = rowDunning(x); return d !== null && d >= 1; });
+      if (!rows.length){
+        empty(box, res.rows.length
+          ? 'In den geladenen Rechnungen ist keine Mahnstufe ≥ 1 erkennbar.'
+          : 'Keine Rechnungsdaten erhalten.');
+      } else {
+        renderRows(box, rows, x => showDetail(det, x, 'Originalrechnung'), 'Keine gemahnten Rechnungen.');
+      }
+    }catch(e2){
+      empty(box, 'Die Rechnungsliste ist derzeit nicht verfügbar (' + friendly(e2) + ') — das Stufen-Diagramm oben bleibt gültig.');
+    }
+  }catch(e){
+    errBox(body, friendly(e), ()=>loadMJ());
+  }
+}
+
+/* ================= MOCK-/VORSCHAU-DATEN (nur ?mock=1) =================
+   Frei erfundene Beispieldaten (Muster/Beispiel) — keine echten Patienten. */
+const MOCK_OI = [
+  { dunningLevel:0, name:'Es wurde noch nicht gemahnt',          count:767, sumGross:120750.07, color:'#5D7C2D' },
+  { dunningLevel:1, name:'Erste Zahlungserinnerung',             count:166, sumGross: 24857.09, color:'#B2D281' },
+  { dunningLevel:2, name:'Zweite Zahlungserinnerung',            count: 98, sumGross: 15230.40, color:'#C6A15B' },
+  { dunningLevel:3, name:'Letzte Mahnung',                       count: 41, sumGross:  9814.75, color:'#D98079' },
+  { dunningLevel:4, name:'Übergabe gerichtliches Mahnverfahren', count: 57, sumGross: 23464.30, color:'#C0473E' }
+];
+const MOCK_INV = [
+  { invoiceNumber:'2026-10412', patientName:'Muster, Max',    az:'22850-2026-0412', invoiceDate:'2026-06-12', amount: 384.50, openAmount: 384.50, dunningLevel:1, status:'offen',         documentId:'DOC-BSP-1' },
+  { invoiceNumber:'2026-10398', patientName:'Beispiel, Erika', az:'22850-2026-0398', invoiceDate:'2026-05-28', amount: 812.40, openAmount:   0.00, dunningLevel:0, status:'ausgeglichen', documentId:'DOC-BSP-2' },
+  { invoiceNumber:'2026-10377', patientName:'Muster, Mia',    az:'22850-2026-0377', invoiceDate:'2026-04-30', amount:1240.00, openAmount: 620.00, dunningLevel:3, status:'offen' }
+];
+const MOCK_ACC = [
+  { bookingDate:'2026-06-28', text:'Zahlungseingang Rechnung 2026-10398', name:'Beispiel, Erika', amount: 812.40, type:'Zahlung' },
+  { bookingDate:'2026-06-21', text:'Zahlungseingang Rechnung 2026-10311', name:'Muster, Max',     amount: 384.50, type:'Zahlung' },
+  { bookingDate:'2026-06-14', text:'Rückerstattung Doppelzahlung',        name:'Muster, Mia',     amount:-120.00, type:'Erstattung' },
+  { bookingDate:'2026-06-07', text:'Zahlungseingang Teilbetrag 2026-10377', name:'Muster, Mia',   amount: 620.00, type:'Zahlung' }
+];
+function mockTage(){
+  const out = [];
+  const WDN = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const start = new Date(2026, 3, 20); // 20.04.2026
+  for (let i = 0; i < 74; i++){
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const wd = d.getDay();
+    if (wd === 0 || wd === 6) continue;
+    out.push({ datum: localIso(d), umsatz: 5200 + ((i * 937) % 4800), wochentag: WDN[wd], quelle: 'beispiel' });
+  }
+  return out;
+}
+const MOCKDB = {
+  fin_umsatz_tag: mockTage(),
+  fin_pas_kpi: [
+    { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Feb', betrag:149832.21, meta:null },
+    { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Mär', betrag: 99742.29, meta:null },
+    { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Apr', betrag:155785.46, meta:null },
+    { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Mai', betrag:156949.81, meta:null },
+    { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Jun', betrag:140961.21, meta:null },
+    { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Jul', betrag: 37704.84, meta:null }
+  ].concat(MOCK_OI.map(x => ({
+    stichtag:'2026-07-02', kind:'open_item', periode:String(x.dunningLevel), betrag:x.sumGross,
+    meta:{ count:x.count, name:x.name, color:x.color }
+  })))
+};
+async function mockPas(payload){
+  // Vorschau-Modus: liefert ausschließlich lokale Beispieldaten, führt KEINE Netz-Requests aus.
+  const path = (payload && payload.path) || '';
+  if (path === 'dashboard/statistic/open-item') return { ok:true, status:200, data: MOCK_OI };
+  if (path === 'invoice/list')                  return { ok:true, status:200, data: MOCK_INV };
+  if (path === 'accounting-entry/list')         return { ok:true, status:200, data: MOCK_ACC };
+  if (path === 'invoice/search'){
+    const q = String((payload.body && (payload.body.query || payload.body.q)) || '').toLowerCase();
+    return { ok:true, status:200, data: MOCK_INV.filter(r => JSON.stringify(r).toLowerCase().includes(q)) };
+  }
+  return { ok:true, status:200, data: [] };
+}
+
+// ---------------- Event-Verdrahtung Auth ----------------
+function wireCode(inputId, formId){
+  const i = $('#'+inputId);
+  i.addEventListener('input', ()=>{
+    const v = i.value.replace(/\D/g,'').slice(0,6);
+    if (v !== i.value) i.value = v;
+    if (v.length === 6){
+      const f = $('#'+formId);
+      if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', {cancelable:true}));
+    }
+  });
+}
+$('#login-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  setErr('login','');
+  busy('login-btn', true, 'Anmelden …');
+  try{
+    sb = await getSb();
+    const email = $('#login-email').value.trim();
+    const password = $('#login-pass').value;
+    if (!email || !password) throw new Error('Bitte E-Mail und Passwort eingeben.');
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    await gotoMfa();
+  }catch(e){
+    setErr('login', friendly(e));
+  }finally{
+    busy('login-btn', false);
+  }
+});
+$('#enroll-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  setErr('enroll','');
+  const code = $('#enroll-code').value.trim();
+  if (code.length !== 6){ setErr('enroll','Bitte den 6-stelligen Code aus der App eingeben.'); return; }
+  if (!enrollFactorId){ setErr('enroll','Die Einrichtung ist noch nicht bereit — bitte kurz warten oder erneut starten.'); return; }
+  busy('enroll-btn', true, 'Prüfe Code …');
+  try{
+    await verifyCode(enrollFactorId, code);
+  }catch(e){
+    setErr('enroll', friendly(e));
+    $('#enroll-code').value = '';
+    $('#enroll-code').focus();
+  }finally{
+    busy('enroll-btn', false);
+  }
+});
+$('#pin-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  setErr('pin','');
+  const code = $('#pin-code').value.trim();
+  if (code.length !== 6){ setErr('pin','Bitte den 6-stelligen Code aus der Authenticator-App eingeben.'); return; }
+  busy('pin-btn', true, 'Prüfe Code …');
+  try{
+    await verifyCode(pinFactorId, code);
+  }catch(e){
+    setErr('pin', friendly(e));
+    $('#pin-code').value = '';
+    $('#pin-code').focus();
+  }finally{
+    busy('pin-btn', false);
+  }
+});
+wireCode('pin-code','pin-form');
+wireCode('enroll-code','enroll-form');
+$('#enroll-retry').addEventListener('click', ()=>{ startEnroll(null).catch(e => setErr('enroll', friendly(e))); });
+$('#enroll-cancel').addEventListener('click', doLogout);
+$('#pin-cancel').addEventListener('click', doLogout);
+$('#copy-secret').addEventListener('click', async ()=>{
+  const btn = $('#copy-secret');
+  try{
+    await navigator.clipboard.writeText($('#enroll-secret').textContent);
+    btn.textContent = 'Kopiert ✓';
+    setTimeout(()=>{ btn.textContent = 'Kopieren'; }, 1800);
+  }catch(_e){
+    try{
+      const r = document.createRange();
+      r.selectNode($('#enroll-secret'));
+      const s = getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    }catch(_e2){}
+  }
+});
+
+// ---------------- Boot ----------------
+(async function main(){
+  try{
+    if (MOCK){ await enterApp(); return; }   // Vorschau: direkt App-Shell mit Beispieldaten
+    showScreen('boot');
+    try{
+      sb = await getSb();
+    }catch(e){
+      showScreen('login');
+      setErr('login', friendly(e));
+      return;
+    }
+    await route();
+  }catch(e){
+    showScreen('login');
+    setErr('login', friendly(e));
+  }
+})();
+</script>
+</body>
+</html>
