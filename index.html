@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<!-- Security-Härtung (GitHub Pages kann keine HTTP-Header setzen → CSP/Referrer per <meta>).
+     Hinweis: frame-ancestors wird in <meta>-CSP von Browsern ignoriert — dagegen wirkt das
+     Frame-Busting-Script unten; die Direktive bleibt als Dokumentation/Defense-in-Depth drin. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://iumlhsmbnfdzfxagkjpl.supabase.co; connect-src https://iumlhsmbnfdzfxagkjpl.supabase.co https://esm.sh; frame-ancestors 'none'; base-uri 'none'">
+<meta name="referrer" content="same-origin">
+<script>
+/* Frame-Busting gegen Clickjacking — läuft synchron VOR allem anderen
+   (X-Frame-Options ist auf GitHub Pages nicht setzbar). */
+if (self !== top){ try{ top.location = self.location; }catch(e){ document.documentElement.style.display = 'none'; } }
+</script>
 <title>NEVPAZ · Finanz-Cockpit</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23C6A15B'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-weight='800' font-size='36' fill='%2314203D' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E">
 <style>
@@ -11,7 +21,7 @@
 :root{
 --creme:#F4EEE1;--creme2:#FBF7EE;--card:#FCFAF4;--navy:#132038;--navy2:#1C2E4E;--navy3:#25406B;
 --gold:#C6A15B;--gold2:#E0C583;--goldd:#A6863F;--grn:#2F7D5B;--grn2:#48A57C;--red:#C0473E;--reds:#D98079;
---ink:#1B2540;--ink2:#5A6478;--ink3:#93805A;--line:#E6DCC7;
+--ink:#1B2540;--ink2:#5A6478;--ink3:#93805A;--ink3t:#7A6440;--line:#E6DCC7;
 --sh:0 2px 6px rgba(19,32,56,.08),0 14px 34px rgba(19,32,56,.10);
 --sh2:0 4px 10px rgba(19,32,56,.12),0 24px 54px rgba(19,32,56,.16);
 --goldgrad:linear-gradient(135deg,#E0C583,#C6A15B 55%,#A6863F);
@@ -35,11 +45,11 @@ button{font-family:'DM Sans',system-ui,sans-serif}
 .abrand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:22px;text-align:center}
 .mono-n{width:54px;height:54px;border-radius:16px;background:var(--goldgrad);display:grid;place-items:center;color:#14203D;font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:27px;box-shadow:0 8px 22px rgba(198,161,91,.45),inset 0 1px 0 rgba(255,255,255,.55)}
 .abrand b{font-family:'Playfair Display',Georgia,serif;font-size:21px;color:var(--navy);letter-spacing:.4px}
-.abrand span{display:block;font-size:10.5px;color:var(--ink3);letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+.abrand span{display:block;font-size:10.5px;color:var(--ink3t);letter-spacing:.22em;text-transform:uppercase;font-weight:700}
 .atitle{font-size:17px;color:var(--navy);text-align:center;margin-bottom:4px}
 .asub{font-size:12.5px;color:var(--ink2);text-align:center;margin-bottom:18px;line-height:1.6}
 .fld{margin-bottom:14px}
-.fld label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink3);margin-bottom:6px}
+.fld label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink3t);margin-bottom:6px}
 .fld input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#FFFDF7;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);outline:none;transition:.18s}
 .fld input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,161,91,.18)}
 .codein{font-family:'JetBrains Mono',monospace!important;font-size:29px!important;font-weight:600;letter-spacing:.42em;text-align:center;padding:13px 6px 13px 14px!important;color:var(--navy)!important}
@@ -54,7 +64,7 @@ button{font-family:'DM Sans',system-ui,sans-serif}
 .btn.ghostw:hover{background:rgba(198,161,91,.14)}
 .err{display:none;margin:12px 0 2px;padding:11px 14px;border-radius:11px;border:1px solid rgba(192,71,62,.4);background:rgba(192,71,62,.08);color:var(--red);font-size:12.5px;line-height:1.55}
 .err.on{display:block}
-.afoot{margin-top:18px;text-align:center;font-size:10.5px;color:var(--ink3);letter-spacing:.05em}
+.afoot{margin-top:18px;text-align:center;font-size:10.5px;color:var(--ink3t);letter-spacing:.05em}
 .alink{display:block;margin:14px auto 0;font-size:12px;color:var(--ink2);cursor:pointer;text-decoration:underline;background:none;border:0}
 .alink:hover{color:var(--navy)}
 .qrbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;place-items:center;margin:6px auto 12px;width:206px;height:206px;box-shadow:inset 0 1px 3px rgba(19,32,56,.08)}
@@ -101,7 +111,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column}
 .card h3{font-size:17px;font-weight:700;color:var(--navy)}
 .card .cs{color:var(--ink2);font-size:12.5px;margin-bottom:16px;margin-top:1px}
 .kpi{padding:22px 24px}
-.kpi .lab{color:var(--ink3);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;padding-right:52px}
+.kpi .lab{color:var(--ink3t);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;padding-right:52px}
 .kpi .val{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:31px;margin-top:9px;letter-spacing:-.5px;color:var(--navy);text-shadow:0 2px 0 rgba(19,32,56,.06),0 4px 12px rgba(19,32,56,.08);word-break:break-word}
 .kpi .foot{color:var(--ink2);font-size:12px;margin-top:9px}
 .kpi .acc{position:absolute;top:20px;right:22px;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:20px;box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.6)}
@@ -124,7 +134,7 @@ details pre{background:rgba(19,32,56,.05);padding:10px;border-radius:8px;font-si
 .fbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;background:linear-gradient(180deg,var(--creme2),var(--card));border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;position:relative;overflow:hidden}
 .fbar:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--goldgrad);opacity:.75}
 .ff{display:flex;flex-direction:column;gap:5px}
-.ff>span{color:var(--ink3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:10px}
+.ff>span{color:var(--ink3t);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:10px}
 .ff input,.ff select{padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#FFFDF7;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:.15s}
 .ff input:focus,.ff select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,161,91,.15)}
 .ff.grow{flex:1;min-width:210px}.ff.grow input{width:100%}
@@ -137,16 +147,29 @@ details pre{background:rgba(19,32,56,.05);padding:10px;border-radius:8px;font-si
 .sumline{display:none;gap:20px;flex-wrap:wrap;margin-top:12px;padding:12px 16px;border-radius:12px;background:rgba(19,32,56,.045);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600}
 .sumline .pos{color:var(--grn)}.sumline .neg{color:var(--red)}
 .toast{position:fixed;right:18px;bottom:18px;background:var(--red);color:#fff;padding:12px 18px;border-radius:12px;box-shadow:var(--sh2);font-size:13px;z-index:99;max-width:420px;animation:rise .3s}
+.toast.ok{background:linear-gradient(135deg,#48A57C,#2F7D5B)}
+/* ---------- Ausgaben & Belege ---------- */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;cursor:help;white-space:nowrap}
+.b-grn{background:rgba(47,125,91,.13);color:var(--grn);border:1px solid rgba(47,125,91,.35)}
+.b-gold{background:rgba(198,161,91,.16);color:var(--goldd);border:1px solid rgba(198,161,91,.5)}
+.b-gry{background:rgba(90,100,120,.10);color:var(--ink2);border:1px solid rgba(90,100,120,.28)}
+.tsel{padding:6px 8px;border:1px solid var(--line);border-radius:9px;background:#FFFDF7;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--ink);outline:none;max-width:190px;transition:.15s}
+.tsel:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,161,91,.15)}
+.tsel:disabled{opacity:.55}
+.blsub{color:var(--ink2);font-size:11.5px;margin-top:2px;font-weight:400}
+.hintfoot{margin-top:14px;font-size:11.5px;color:var(--ink3t)}
+.ff.chk{flex-direction:row;align-items:center;gap:8px;align-self:flex-end;padding-bottom:10px;cursor:pointer}
+.ff.chk input{accent-color:var(--goldd);width:15px;height:15px;cursor:pointer;margin:0}
 /* ---------- Detail ---------- */
 .detail{margin-bottom:16px}
 .dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
 .xbtn{border:0;background:rgba(19,32,56,.06);width:30px;height:30px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--ink2);flex-shrink:0}
 .xbtn:hover{background:rgba(192,71,62,.12);color:var(--red)}
 .dgrid{display:grid;grid-template-columns:190px 1fr;gap:8px 16px;font-size:13px}
-.dt{color:var(--ink3);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:3px}
+.dt{color:var(--ink3t);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:3px}
 .dd{color:var(--ink);word-break:break-word}
 .dactions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
-.pfoot{padding:16px 40px 26px;color:var(--ink3);font-size:11.5px}
+.pfoot{padding:16px 40px 26px;color:var(--ink3t);font-size:11.5px}
 pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:11.5px;overflow:auto;max-height:420px;font-family:'JetBrains Mono',monospace}
 /* ---------- Responsive ---------- */
 @media(max-width:1150px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
@@ -229,7 +252,7 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
         <code class="secret" id="enroll-secret">…</code>
         <button class="btn ghost sm" id="copy-secret" type="button">Kopieren</button>
       </div>
-      <div style="text-align:center;font-size:11px;color:var(--ink3)">Falls das Scannen nicht klappt: Schlüssel manuell eingeben.</div>
+      <div style="text-align:center;font-size:11px;color:var(--ink3t)">Falls das Scannen nicht klappt: Schlüssel manuell eingeben.</div>
       <ol class="steps">
         <li>Microsoft Authenticator öffnen</li>
         <li>Konto hinzufügen → „Anderes Konto (Google, Facebook usw.)“</li>
@@ -282,6 +305,8 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
     <nav class="nav" id="nav">
       <div class="grp">Überblick</div>
       <a data-t="ov" class="on"><span class="i">◈</span>Übersicht</a>
+      <div class="grp">Ausgaben</div>
+      <a data-t="aus"><span class="i">🧾</span>Ausgaben &amp; Belege</a>
       <div class="grp">PHI · Live</div>
       <a data-t="pat"><span class="i">🔎</span>Patientensuche</a>
       <a data-t="re"><span class="i">🧾</span>Rechnungsausgang</a>
@@ -307,6 +332,11 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
         <h2 class="tt">Übersicht</h2>
         <div class="ts">Aggregate direkt aus Supabase — pseudonymisiert, ohne Patientendaten</div>
         <div class="tabbody" id="body-ov"></div>
+      </section>
+      <section class="tab" id="t-aus">
+        <h2 class="tt">Ausgaben &amp; Belege</h2>
+        <div class="ts">Belege aus dem Ausgaben-Postfach — KI-kategorisiert · Korrekturen fließen direkt nach Supabase (aal2)</div>
+        <div class="tabbody" id="body-aus"></div>
       </section>
       <section class="tab" id="t-pat">
         <h2 class="tt">Patientensuche</h2>
@@ -354,10 +384,11 @@ const PAS_CLIENT_ID = "22850";
 const MOCK = new URLSearchParams(location.search).get('mock') === '1';
 
 // ---------------- Supabase lazy laden (ES-Modul via esm.sh) ----------------
+// Version exakt gepinnt (Supply-Chain-Härtung): @supabase/supabase-js@2.45.4 — geprüft, lädt über esm.sh.
 let sb = null;
 const sbP = MOCK
   ? Promise.resolve(null)
-  : import("https://esm.sh/@supabase/supabase-js@2")
+  : import("https://esm.sh/@supabase/supabase-js@2.45.4")
       .then(m => m.createClient(SUPABASE_URL, SUPABASE_ANON_KEY))
       .catch(() => null); // Fehler wird bei Verwendung deutsch gemeldet
 
@@ -437,8 +468,8 @@ function friendly(e){
   if (/failed to fetch|networkerror|network|load failed/i.test(m)) return 'Netzwerkfehler — bitte Internetverbindung prüfen und erneut versuchen.';
   return m || 'Unbekannter Fehler — bitte erneut versuchen.';
 }
-function toast(msg){
-  const t = elx('div','toast', msg);
+function toast(msg, ok){
+  const t = elx('div','toast' + (ok ? ' ok' : ''), msg);
   document.body.append(t);
   setTimeout(()=>t.remove(), 5200);
 }
@@ -495,7 +526,7 @@ function shade(hex, p){
 }
 if (HASCHART){
   Chart.defaults.font.family = "'DM Sans',sans-serif";
-  Chart.defaults.color = '#93805A';
+  Chart.defaults.color = '#7A6440'; // AA-Kontrast für Achsen-/Tick-Text auf Creme (statt #93805A)
   Chart.defaults.font.size = 11;
   Chart.defaults.layout.padding = {top:22, right:14, left:4, bottom:0};
   // Kleines Inline-Plugin: permanente Wert-Labels über den Balken
@@ -521,6 +552,36 @@ if (HASCHART){
       ctx.restore();
     }
   });
+  // NEO-Plugin (portiert aus build_cockpit.py): heller Energy-Cap mit Glow auf der
+  // Balken-Oberkante + halbtransparenter Glas-Schimmer im linken Drittel.
+  // Aktiv für jedes Balken-Dataset mit gesetztem `neoColor` (Grundfarbe oder Farbarray).
+  Chart.register({
+    id: 'neo',
+    afterDatasetsDraw(c){
+      const ctx = c.ctx;
+      c.data.datasets.forEach((ds, di)=>{
+        if ((ds.type || c.config.type) !== 'bar' || !ds.neoColor) return;
+        const m = c.getDatasetMeta(di);
+        if (m.hidden) return;
+        m.data.forEach((el, i)=>{
+          const p = el.getProps(['x','y','base','width'], true);
+          if (!isFinite(p.x) || !isFinite(p.y) || !isFinite(p.base)) return;
+          const T = Math.min(p.y, p.base), B = Math.max(p.y, p.base), h = B - T;
+          if (h < 2 || p.width < 2) return;
+          const b = Array.isArray(ds.neoColor) ? ds.neoColor[i % ds.neoColor.length] : ds.neoColor;
+          const cap = shade(b, 70);
+          const hw = p.width/2, L = p.x - hw, R = p.x + hw, ins = p.width > 8 ? 2 : 0;
+          ctx.save();
+          const sw = Math.min(Math.max(2, p.width/3), Math.max(0, p.width - 3)); // Glas-Schimmer (linkes Drittel)
+          if (sw > 1 && h > 8){ ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(L + 1.5, T + 4, sw, h - 6); }
+          ctx.strokeStyle = cap; ctx.lineWidth = 3; ctx.lineCap = 'round';
+          ctx.shadowColor = cap; ctx.shadowBlur = 12;                            // Energy-Cap auf der Oberkante
+          ctx.beginPath(); ctx.moveTo(L + ins, T); ctx.lineTo(R - ins, T); ctx.stroke();
+          ctx.restore();
+        });
+      });
+    }
+  });
 }
 // NEO-Stil: schmale Balken, oben gerundet, vertikaler Verlauf hell→dunkel
 const NEO  = { borderRadius:8, borderSkipped:'bottom', maxBarThickness:26, barPercentage:.5, categoryPercentage:.55 };
@@ -536,11 +597,25 @@ function neoBg(base){
     return g;
   };
 }
+// Zentraler Helper: Balken-Dataset im NEO-Look — Gradient, Hover und `neoColor`
+// (Grundfarbe bzw. Farbarray) fürs NEO-Plugin (Energy-Cap + Glas-Schimmer).
+function neoBar(base){
+  return Object.assign({
+    neoColor: base,
+    backgroundColor: neoBg(base),
+    hoverBackgroundColor: c => shade(Array.isArray(base) ? base[c.dataIndex % base.length] : base, 24)
+  }, NEO);
+}
 function mkScales(){
   return {
     y:{grid:{color:'rgba(19,32,56,.06)'}, border:{display:false}, ticks:{callback:v=>K(v)}},
     x:{grid:{display:false}, border:{display:false}}
   };
+}
+// Tooltip-Konfiguration für Geld-Charts: Beträge als „1.234,56 €" (EUR-Format).
+// Zähl-Datasets (z.B. Fälle) behalten die reine Zahl — siehe mjChart.
+function eurTip(){
+  return { callbacks: { label: c => (c.dataset.label ? c.dataset.label + ': ' : '') + EUR(c.parsed.y) } };
 }
 const CHARTS = {};
 function mk(id, cfg){
@@ -649,7 +724,7 @@ async function doLogout(){
 // ---------------- App-Shell (Tabs) ----------------
 let loaded = {};
 let appWired = false;
-const LOADERS = { ov: loadOV, pat: initPat, re: loadRE, za: loadZA, mahn: loadMJ };
+const LOADERS = { ov: loadOV, aus: loadAUS, pat: initPat, re: loadRE, za: loadZA, mahn: loadMJ };
 
 async function enterApp(){
   if (!MOCK){
@@ -688,8 +763,10 @@ async function fetchTable(t){
   if (MOCK) return JSON.parse(JSON.stringify(MOCKDB[t] || [])); // Vorschau: nur Beispieldaten
   sb = await getSb();
   let q = sb.from(t).select('*').limit(4000);
-  if (t === 'fin_pas_kpi')    q = sb.from(t).select('*').order('stichtag', {ascending:false}).limit(4000);
-  if (t === 'fin_umsatz_tag') q = sb.from(t).select('*').order('datum',    {ascending:false}).limit(4000);
+  if (t === 'fin_pas_kpi')    q = sb.from(t).select('*').order('stichtag',    {ascending:false}).limit(4000);
+  if (t === 'fin_umsatz_tag') q = sb.from(t).select('*').order('datum',       {ascending:false}).limit(4000);
+  if (t === 'fin_beleg')      q = sb.from(t).select('*').order('beleg_datum', {ascending:false}).limit(4000);
+  if (t === 'fin_kategorie')  q = sb.from(t).select('*').order('sort');
   const { data, error } = await q;
   if (error) throw error;
   return data || [];
@@ -757,10 +834,12 @@ function renderOV(body, kpi, tage){
     mk('ovOI', {
       type:'bar',
       data:{ labels: oi.map(r => 'Stufe ' + r.periode),
-             datasets:[ Object.assign({ data: oi.map(r => +r.betrag || 0), backgroundColor: neoBg(colors) }, NEO) ] },
+             datasets:[ Object.assign({ data: oi.map(r => +r.betrag || 0) }, neoBar(colors)) ] },
       options:{ animation:ANIM, scales:mkScales(),
         plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K},
-          tooltip:{ callbacks:{ afterLabel:(c)=>{
+          tooltip:{ callbacks:{
+            label:(c)=> EUR(c.parsed.y),
+            afterLabel:(c)=>{
             const m = oi[c.dataIndex] && oi[c.dataIndex].meta || {};
             const parts = [];
             if (m.count != null) parts.push(F(m.count) + ' Fälle');
@@ -775,8 +854,8 @@ function renderOV(body, kpi, tage){
     mk('ovPM', {
       type:'bar',
       data:{ labels: tm.map(r => decodeEnt(r.periode)),
-             datasets:[ Object.assign({ data: tm.map(r => +r.betrag || 0), backgroundColor: neoBg(C.gold) }, NEO) ] },
-      options:{ animation:ANIM, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K} } }
+             datasets:[ Object.assign({ data: tm.map(r => +r.betrag || 0) }, neoBar(C.gold)) ] },
+      options:{ animation:ANIM, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K}, tooltip:eurTip() } }
     });
   }
   const byM = {};
@@ -794,10 +873,272 @@ function renderOV(body, kpi, tage){
     });
     mk('ovCL', {
       type:'bar',
-      data:{ labels, datasets:[ Object.assign({ data: months.map(k => byM[k]), backgroundColor: neoBg(C.navy) }, NEO) ] },
-      options:{ animation:ANIM, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K} } }
+      data:{ labels, datasets:[ Object.assign({ data: months.map(k => byM[k]) }, neoBar(C.navy)) ] },
+      options:{ animation:ANIM, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K}, tooltip:eurTip() } }
     });
   }
+}
+
+// ---------------- Tab „Ausgaben & Belege" (Supabase fin_beleg/fin_kategorie, RLS aal2) ----------------
+const BELEG_STATI = ['erfasst','geprüft','exportiert'];
+const KAT_FARBEN  = [C.gold, C.navy2, C.grn2, C.reds, C.gold2, C.navy, C.grn, C.red, '#8A97B4', '#B2D281'];
+
+async function loadAUS(){
+  const body = $('#body-aus');
+  spin(body, 'Belege werden aus Supabase geladen …');
+  try{
+    const [belege, kats] = await Promise.all([fetchTable('fin_beleg'), fetchTable('fin_kategorie')]);
+    renderAUS(body, belege, kats);
+  }catch(e){
+    errBox(body, 'Ausgaben & Belege konnten nicht geladen werden: ' + friendly(e), ()=>loadAUS());
+  }
+}
+function belegNum(v){
+  if (typeof v === 'number' && !isNaN(v)) return v;
+  if (typeof v === 'string'){ const n = deNum(v); if (n != null) return n; const f = parseFloat(v); if (!isNaN(f)) return f; }
+  return 0;
+}
+function katName(kats, id){
+  if (id == null || id === '') return 'Ohne Kategorie';
+  const k = kats.find(x => String(x.id) === String(id));
+  return k ? decodeEnt(String(k.name || k.id)) : decodeEnt(String(id));
+}
+function kiBadge(b){
+  const conf = (typeof b.ki_konfidenz === 'number' && !isNaN(b.ki_konfidenz)) ? b.ki_konfidenz : null;
+  const cls  = conf == null ? 'b-gry' : conf >= 0.9 ? 'b-grn' : conf >= 0.7 ? 'b-gold' : 'b-gry';
+  const s = elx('span','badge ' + cls, conf == null ? 'KI —' : 'KI ' + Math.round(conf*100) + '%');
+  s.title = b.ki_begruendung ? decodeEnt(String(b.ki_begruendung)) : 'Keine KI-Begründung hinterlegt.';
+  return s;
+}
+// Beleg-Original ansehen: signierte Storage-URL (60 s gültig) in neuem Tab öffnen
+async function openBeleg(pfad){
+  if (MOCK){ toast('Im Vorschau-Modus ist der Beleg-Abruf deaktiviert.'); return; } // Vorschau-Guard: NIE echte Storage-Calls
+  const w = window.open('about:blank', '_blank'); // synchron öffnen (Popup-Blocker)
+  try{
+    sb = await getSb();
+    const { data, error } = await sb.storage.from('belege').createSignedUrl(pfad, 60);
+    if (error) throw error;
+    const url = data && data.signedUrl;
+    if (!url) throw new Error('Keine signierte URL erhalten.');
+    if (w) w.location.href = url; else window.open(url, '_blank');
+  }catch(e){
+    if (w){ try{ w.close(); }catch(_e){} }
+    toast('Beleg konnte nicht geöffnet werden: ' + friendly(e));
+  }
+}
+// Kategorie/Status korrigieren (RLS erlaubt UPDATE nur für aal2)
+async function saveBeleg(b, patch){
+  if (MOCK){ Object.assign(b, patch); toast('Vorschau: Änderung nur lokal übernommen (kein Supabase-Schreiben).', true); return; } // Vorschau-Guard
+  sb = await getSb();
+  const { error } = await sb.from('fin_beleg')
+    .update({ kategorie_id: patch.kategorie_id, status: patch.status })
+    .eq('id', b.id);
+  if (error) throw error;
+  Object.assign(b, patch);
+  toast('Beleg aktualisiert — Kategorie/Status gespeichert.', true);
+}
+function renderAUS(body, belege, kats){
+  body.textContent = '';
+  const st = { q:'', von:'', bis:'', kat:'alle', status:'alle', steuer:false };
+
+  // --- Filterleiste (clientseitig) ---
+  const bar = elx('div','fbar');
+  function fld(labelText, input, grow){
+    const w = elx('label','ff' + (grow ? ' grow' : ''));
+    w.append(elx('span', null, labelText), input);
+    return w;
+  }
+  const iq = document.createElement('input');
+  iq.type = 'search'; iq.placeholder = 'Händler oder Beschreibung …';
+  iq.addEventListener('input', deb(()=>{ st.q = iq.value.trim().toLowerCase(); rerender(); }, 200));
+  const iv = document.createElement('input'); iv.type = 'date';
+  iv.addEventListener('change', ()=>{ st.von = iv.value; rerender(); });
+  const ib = document.createElement('input'); ib.type = 'date';
+  ib.addEventListener('change', ()=>{ st.bis = ib.value; rerender(); });
+  const sk = document.createElement('select');
+  { const o = document.createElement('option'); o.value = 'alle'; o.textContent = 'Alle Kategorien'; sk.append(o); }
+  kats.forEach(k => { const o = document.createElement('option'); o.value = String(k.id); o.textContent = decodeEnt(String(k.name || k.id)); sk.append(o); });
+  sk.addEventListener('change', ()=>{ st.kat = sk.value; rerender(); });
+  const ss = document.createElement('select');
+  [['alle','Alle'],['erfasst','erfasst'],['geprüft','geprüft'],['exportiert','exportiert']].forEach(([v,t])=>{
+    const o = document.createElement('option'); o.value = v; o.textContent = t; ss.append(o);
+  });
+  ss.addEventListener('change', ()=>{ st.status = ss.value; rerender(); });
+  const cb = document.createElement('input'); cb.type = 'checkbox';
+  cb.addEventListener('change', ()=>{ st.steuer = cb.checked; rerender(); });
+  const cw = elx('label','ff chk');
+  cw.append(cb, elx('span', null, 'nur steuerrelevant'));
+  bar.append(fld('Suche', iq, true), fld('Zeitraum von', iv), fld('bis', ib), fld('Kategorie', sk), fld('Status', ss), cw);
+
+  // --- Gerüst: KPIs → Charts → Zähler → Tabelle → Summenzeile → Hinweis ---
+  const kpiWrap = elx('div','grid g4');
+  const g2 = elx('div','grid g2'); g2.style.marginTop = '22px';
+  const cKat = chartCard('Ausgaben nach Kategorie', 'Summe brutto je Kategorie — Top 10, gefilterte Belege', 'ausKat');
+  const cMon = chartCard('Ausgaben nach Monat', 'Summe brutto je Monat — gefilterte Belege', 'ausMon', true);
+  g2.append(cKat, cMon);
+  const info = elx('div','finfo'); info.style.marginTop = '18px';
+  const out  = elx('div');
+  const sums = elx('div','sumline');
+  const hint = elx('div','hintfoot','ℹ️ Kategorien sind KI-Vorschläge — vor DATEV-Export prüfen.');
+  body.append(bar, kpiWrap, g2, info, out, sums, hint);
+
+  const fmtMon = k => { const d = new Date(k + '-01T00:00:00'); return isNaN(+d) ? k : d.toLocaleDateString('de-DE', {month:'short', year:'2-digit'}); };
+  function match(b){
+    if (st.q){
+      const t = (decodeEnt(String(b.haendler || '')) + ' ' + decodeEnt(String(b.beschreibung || ''))).toLowerCase();
+      if (!t.includes(st.q)) return false;
+    }
+    const d = String(b.beleg_datum || '').slice(0,10);
+    if (st.von && (!d || d < st.von)) return false;
+    if (st.bis && (!d || d > st.bis)) return false;
+    if (st.kat !== 'alle' && String(b.kategorie_id == null ? '' : b.kategorie_id) !== st.kat) return false;
+    if (st.status !== 'alle' && String(b.status || '') !== st.status) return false;
+    if (st.steuer && !b.steuerrelevant) return false;
+    return true;
+  }
+
+  function belegRow(b){
+    const tr = document.createElement('tr');
+    // Datum
+    const tdD = document.createElement('td');
+    tdD.textContent = b.beleg_datum ? deDate(b.beleg_datum) : '—';
+    tdD.style.whiteSpace = 'nowrap';
+    tr.append(tdD);
+    // Händler (+ Beschreibung als Nebenzeile)
+    const tdH = document.createElement('td');
+    tdH.append(elx('div', null, decodeEnt(String(b.haendler || '—'))));
+    if (b.beschreibung) tdH.append(elx('div','blsub', decodeEnt(String(b.beschreibung))));
+    tr.append(tdH);
+    // Kategorie-Korrektur (Inline-Select)
+    const tdK  = document.createElement('td');
+    const selK = document.createElement('select'); selK.className = 'tsel';
+    { const o = document.createElement('option'); o.value = ''; o.textContent = '— ohne —'; selK.append(o); }
+    kats.forEach(k => { const o = document.createElement('option'); o.value = String(k.id); o.textContent = decodeEnt(String(k.name || k.id)); selK.append(o); });
+    const kv = (b.kategorie_id == null || b.kategorie_id === '') ? '' : String(b.kategorie_id);
+    if (kv && !kats.some(k => String(k.id) === kv)){ const o = document.createElement('option'); o.value = kv; o.textContent = kv; selK.append(o); }
+    selK.value = kv;
+    tdK.append(selK);
+    tr.append(tdK);
+    // Beträge
+    const money = v => { const td = document.createElement('td'); td.className = 'num'; td.textContent = (v == null || v === '') ? '—' : EUR(belegNum(v)); return td; };
+    tr.append(money(b.betrag_netto), money(b.mwst_betrag), money(b.betrag_brutto));
+    // Status-Korrektur (Inline-Select)
+    const tdS  = document.createElement('td');
+    const selS = document.createElement('select'); selS.className = 'tsel';
+    BELEG_STATI.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; selS.append(o); });
+    const sv = String(b.status || 'erfasst');
+    if (!BELEG_STATI.includes(sv)){ const o = document.createElement('option'); o.value = sv; o.textContent = sv; selS.append(o); }
+    selS.value = sv;
+    tdS.append(selS);
+    tr.append(tdS);
+    // KI-Konfidenz-Badge (Tooltip = ki_begruendung)
+    const tdKI = document.createElement('td');
+    tdKI.append(kiBadge(b));
+    tr.append(tdKI);
+    // Beleg ansehen (nur wenn storage_pfad gesetzt)
+    const tdB = document.createElement('td');
+    if (b.storage_pfad){
+      const btn = elx('button','btn ghost sm','ansehen');
+      btn.type = 'button';
+      btn.addEventListener('click', ()=>openBeleg(String(b.storage_pfad)));
+      tdB.append(btn);
+    } else {
+      tdB.textContent = '—';
+    }
+    tr.append(tdB);
+    // Änderung speichern (Kategorie ODER Status) → beide Werte gemeinsam senden
+    async function commit(){
+      const kSel = selK.value;
+      const kHit = kSel === '' ? null : kats.find(k => String(k.id) === kSel);
+      const patch = { kategorie_id: kSel === '' ? null : (kHit ? kHit.id : kSel), status: selS.value };
+      selK.disabled = selS.disabled = true;
+      try{
+        await saveBeleg(b, patch);
+        rerender(); // KPIs, Charts und Summen sofort nachziehen
+      }catch(e){
+        selK.value = kv;
+        selS.value = sv;
+        toast('Speichern fehlgeschlagen: ' + friendly(e));
+      }finally{
+        selK.disabled = selS.disabled = false;
+      }
+    }
+    selK.addEventListener('change', commit);
+    selS.addEventListener('change', commit);
+    return tr;
+  }
+  function renderBelegTable(container, rows){
+    container.textContent = '';
+    if (!rows.length){
+      empty(container, belege.length
+        ? 'Kein Beleg entspricht den gesetzten Filtern.'
+        : 'Noch keine Belege in Supabase — neue Belege landen automatisch über den Beleg-Scan hier.');
+      return;
+    }
+    const wrap  = elx('div','tscroll');
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trh   = document.createElement('tr');
+    [['Datum'],['Händler'],['Kategorie'],['Netto','num'],['MwSt','num'],['Brutto','num'],['Status'],['KI'],['Beleg']].forEach(([t, cls])=>{
+      const th = document.createElement('th');
+      th.textContent = t;
+      if (cls) th.className = cls;
+      trh.append(th);
+    });
+    thead.append(trh); table.append(thead);
+    const tbody = document.createElement('tbody');
+    rows.slice(0, 500).forEach(b => tbody.append(belegRow(b)));
+    table.append(tbody);
+    wrap.append(table);
+    container.append(wrap);
+    if (rows.length > 500) container.append(elx('div','finfo','Anzeige auf die ersten 500 Zeilen begrenzt — bitte Filter nutzen.'));
+  }
+  function rerender(){
+    const rows = belege.filter(match);
+    const sBrutto = rows.reduce((s,b)=> s + belegNum(b.betrag_brutto), 0);
+    const sNetto  = rows.reduce((s,b)=> s + belegNum(b.betrag_netto), 0);
+    const sMwst   = rows.reduce((s,b)=> s + belegNum(b.mwst_betrag), 0);
+    const nOffen  = rows.filter(b => String(b.status || '') === 'erfasst').length;
+    // — KPI-Kacheln (folgen den Filtern) —
+    kpiWrap.textContent = '';
+    kpiWrap.append(
+      kpiCard('a-navy','🧾','Summe brutto', EUR(sBrutto), rows.length === belege.length ? 'alle geladenen Belege' : 'gefilterter Zeitraum'),
+      kpiCard('a-gold','％','Vorsteuer (MwSt)', EUR(sMwst), 'enthaltene MwSt-Beträge'),
+      kpiCard('a-grn','🗂','Belege', F(rows.length), 'von ' + F(belege.length) + ' geladen'),
+      kpiCard(nOffen ? 'a-red' : 'a-grn','⚠','Nicht geprüft', F(nOffen), 'Status „erfasst" — bitte prüfen')
+    );
+    // — Charts (Top-10-Kategorien + Monate) —
+    const AN = { duration:450, easing:'easeOutQuart', delay:0 };
+    const byKat = {};
+    rows.forEach(b => { const k = katName(kats, b.kategorie_id); byKat[k] = (byKat[k] || 0) + belegNum(b.betrag_brutto); });
+    const top = Object.entries(byKat).sort((a,b)=> b[1] - a[1]).slice(0,10);
+    mk('ausKat', {
+      type:'bar',
+      data:{ labels: top.map(t => t[0]),
+             datasets:[ Object.assign({ data: top.map(t => t[1]) }, neoBar(top.map((_,i)=>KAT_FARBEN[i % KAT_FARBEN.length]))) ] },
+      options:{ animation:AN, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K}, tooltip:eurTip() } }
+    });
+    const byMon = {};
+    rows.forEach(b => { const k = String(b.beleg_datum || '').slice(0,7); if (k.length === 7) byMon[k] = (byMon[k] || 0) + belegNum(b.betrag_brutto); });
+    const mons = Object.keys(byMon).sort();
+    mk('ausMon', {
+      type:'bar',
+      data:{ labels: mons.map(fmtMon), datasets:[ Object.assign({ data: mons.map(k => byMon[k]) }, neoBar(C.grn)) ] },
+      options:{ animation:AN, scales:mkScales(), plugins:{ legend:{display:false}, vlbl:{on:true, fmt:K}, tooltip:eurTip() } }
+    });
+    // — Zähler, Tabelle, Summenzeile —
+    info.textContent = F(rows.length) + ' von ' + F(belege.length) + ' Belegen';
+    renderBelegTable(out, rows);
+    sums.textContent = '';
+    if (rows.length){
+      sums.style.display = 'flex';
+      const mkPart = (t, v)=>{ const s2 = elx('span'); s2.append(elx('b', null, t + ' ')); s2.append(document.createTextNode(v)); return s2; };
+      sums.append(mkPart('Netto:', EUR(sNetto)), mkPart('MwSt:', EUR(sMwst)), mkPart('Brutto:', EUR(sBrutto)));
+    } else {
+      sums.style.display = 'none';
+    }
+  }
+  rerender();
 }
 
 // ---------------- PHI-Proxy-Schicht ----------------
@@ -880,7 +1221,8 @@ const HMAP = {
   firstname:'Vorname', lastname:'Nachname', birthdate:'Geburtsdatum',
   description:'Beschreibung', text:'Text', type:'Typ', id:'ID', currency:'Währung',
   clientid:'Mandant', year:'Jahr', month:'Monat', color:'Farbe',
-  stufe:'Stufe', bezeichnung:'Bezeichnung', anzahl:'Anzahl', summe:'Summe offen'
+  stufe:'Stufe', bezeichnung:'Bezeichnung', anzahl:'Anzahl', summe:'Summe offen',
+  documentid:'Dokument-ID', fileid:'Datei-ID', pdfid:'PDF-ID'
 };
 function germanHeader(k){
   const hit = HMAP[String(k).toLowerCase()];
@@ -1298,13 +1640,17 @@ async function loadMJ(){
         data:{
           labels: items.map(x => 'Stufe ' + (x.dunningLevel != null ? x.dunningLevel : '?')),
           datasets:[
-            Object.assign({ type:'bar', label:'Summe offen', data: items.map(x => +x.sumGross || 0), backgroundColor: neoBg(colors), order:2 }, NEO),
+            Object.assign({ type:'bar', label:'Summe offen', data: items.map(x => +x.sumGross || 0), order:2 }, neoBar(colors)),
             { type:'line', label:'Fälle', data: items.map(x => +x.count || 0), borderColor:C.navy2, backgroundColor:C.navy2, tension:.35, pointRadius:4, pointBackgroundColor:C.gold2, borderWidth:2.5, yAxisID:'y1', order:1 }
           ]
         },
         options:{
           animation:ANIM,
-          plugins:{ legend:{position:'top', labels:{usePointStyle:true, padding:12}}, vlbl:{on:true, fmt:K} },
+          plugins:{ legend:{position:'top', labels:{usePointStyle:true, padding:12}}, vlbl:{on:true, fmt:K},
+            // Geld-Balken in €, Zähl-Linie („Fälle") als reine Zahl
+            tooltip:{ callbacks:{ label: c => c.dataset.type === 'line'
+              ? (c.dataset.label + ': ' + F(c.parsed.y))
+              : ((c.dataset.label ? c.dataset.label + ': ' : '') + EUR(c.parsed.y)) } } },
           scales: Object.assign(mkScales(), { y1:{ position:'right', grid:{display:false}, border:{display:false}, ticks:{precision:0} } })
         }
       });
@@ -1377,7 +1723,45 @@ function mockTage(){
   }
   return out;
 }
+// Beispiel-Belege für den Tab „Ausgaben & Belege" (frei erfunden, PHI-frei)
+const MOCK_KATS = [
+  { id:'miete',             name:'Miete & Nebenkosten', gruppe:'Raumkosten',    sort:10 },
+  { id:'praxisbedarf',      name:'Praxisbedarf',        gruppe:'Material',      sort:20 },
+  { id:'software',          name:'Software & IT',       gruppe:'IT',            sort:30 },
+  { id:'fortbildung',       name:'Fortbildung',         gruppe:'Personal',      sort:40 },
+  { id:'telekommunikation', name:'Telefon & Internet',  gruppe:'Kommunikation', sort:50 },
+  { id:'kfz',               name:'Kfz & Fahrtkosten',   gruppe:'Mobilität',     sort:60 },
+  { id:'sonstiges',         name:'Sonstiges',           gruppe:'—',             sort:99 }
+];
+const MOCK_BELEGE = [
+  { id:'BLG-BSP-0107', beleg_datum:'2026-07-01', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Juli 2026',
+    betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
+    steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
+    storage_pfad:'2026/07/bsp-miete.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0106', beleg_datum:'2026-06-27', haendler:'MedShop Praxisbedarf AG', beschreibung:'Verbrauchsmaterial Diagnostik (Elektroden, Desinfektion)',
+    betrag_netto:312.60, mwst_satz:19, mwst_betrag:59.39, betrag_brutto:371.99, kategorie_id:'praxisbedarf', status:'geprüft',
+    steuerrelevant:true, ki_konfidenz:0.92, ki_begruendung:'Positionen passen zu medizinischem Verbrauchsmaterial.',
+    storage_pfad:'2026/06/bsp-praxisbedarf.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0105', beleg_datum:'2026-06-24', haendler:'clinicos.ai GmbH', beschreibung:'PVS-Lizenz Juni 2026',
+    betrag_netto:289.00, mwst_satz:19, mwst_betrag:54.91, betrag_brutto:343.91, kategorie_id:'software', status:'erfasst',
+    steuerrelevant:true, ki_konfidenz:0.94, ki_begruendung:'SaaS-Abo-Rechnung mit ausgewiesenem Leistungszeitraum.',
+    storage_pfad:'2026/06/bsp-software.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0104', beleg_datum:'2026-06-18', haendler:'Ärztekammer Hamburg', beschreibung:'Fortbildung Neuropsychopharmakologie (CME)',
+    betrag_netto:480.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:480.00, kategorie_id:'fortbildung', status:'erfasst',
+    steuerrelevant:true, ki_konfidenz:0.78, ki_begruendung:'Teilnahmegebühr ohne USt — vermutlich umsatzsteuerbefreite Fortbildung.',
+    storage_pfad:'2026/06/bsp-fortbildung.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0103', beleg_datum:'2026-06-12', haendler:'Telekom Deutschland GmbH', beschreibung:'Festnetz & Internet Praxisanschluss',
+    betrag_netto:89.08, mwst_satz:19, mwst_betrag:16.92, betrag_brutto:106.00, kategorie_id:'telekommunikation', status:'geprüft',
+    steuerrelevant:true, ki_konfidenz:0.91, ki_begruendung:'Monatsrechnung Telekommunikation, Anschlussadresse = Praxis.',
+    storage_pfad:'2026/06/bsp-telekom.pdf', quelle:'beispiel' },
+  { id:'BLG-BSP-0102', beleg_datum:'2026-06-05', haendler:'Aral Tankstelle Alsterufer', beschreibung:'Kraftstoff Praxisfahrzeug',
+    betrag_netto:71.34, mwst_satz:19, mwst_betrag:13.55, betrag_brutto:84.89, kategorie_id:'kfz', status:'erfasst',
+    steuerrelevant:false, ki_konfidenz:0.62, ki_begruendung:'Tankbeleg ohne Fahrzeugzuordnung — bitte privat/geschäftlich prüfen.',
+    storage_pfad:null, quelle:'beispiel' }
+];
 const MOCKDB = {
+  fin_beleg: MOCK_BELEGE,
+  fin_kategorie: MOCK_KATS,
   fin_umsatz_tag: mockTage(),
   fin_pas_kpi: [
     { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Feb', betrag:149832.21, meta:null },
