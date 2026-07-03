@@ -160,6 +160,26 @@ details pre{background:rgba(19,32,56,.05);padding:10px;border-radius:8px;font-si
 .hintfoot{margin-top:14px;font-size:11.5px;color:var(--ink3t)}
 .ff.chk{flex-direction:row;align-items:center;gap:8px;align-self:flex-end;padding-bottom:10px;cursor:pointer}
 .ff.chk input{accent-color:var(--goldd);width:15px;height:15px;cursor:pointer;margin:0}
+/* erweiterte Filter (aufklappbar) */
+.ff.betr input{width:108px}
+.fext{display:none}
+.fext.on{display:contents}
+.fmore{align-self:flex-end}
+.fcount{display:inline-block;background:var(--goldgrad);color:#14203D;border-radius:999px;padding:0 7px;font-size:10px;font-weight:800;margin-left:6px;line-height:1.7}
+/* Drive-Sync-Statuspanel */
+.syncstrip{margin-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.syncstrip .sshead{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.syncstrip .ssdot{width:8px;height:8px;border-radius:50%;background:var(--grn2);box-shadow:0 0 7px rgba(72,165,124,.75);flex-shrink:0}
+.syncstrip .ssdot.err{background:var(--red);box-shadow:0 0 7px rgba(192,71,62,.75)}
+.syncstrip .ssrun{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--navy);font-weight:600}
+/* Händler-Regeln (lernende Kategorisierung) */
+.brainic{font-size:11px;margin-left:5px;cursor:help}
+.rulebtn{display:block;margin-top:6px;font-size:11px;padding:5px 9px;line-height:1.4;white-space:normal;text-align:left;max-width:200px}
+.regelcard{margin-top:22px}
+.regelcard summary{font-size:13.5px}
+.regelcard .rsub{color:var(--ink2);font-size:12px;margin:8px 0 10px}
+.btn.dngr{border-color:rgba(192,71,62,.45);color:var(--red)}
+.btn.dngr:hover{background:rgba(192,71,62,.08)}
 /* ---------- Prognose & Steuern ---------- */
 .seggrp{display:flex;flex-direction:column;gap:5px}
 .seggrp>span{color:var(--ink3t);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:10px}
@@ -796,6 +816,7 @@ async function fetchTable(t){
   if (t === 'fin_umsatz_tag') q = sb.from(t).select('*').order('datum',       {ascending:false}).limit(4000);
   if (t === 'fin_beleg')      q = sb.from(t).select('*').order('beleg_datum', {ascending:false}).limit(4000);
   if (t === 'fin_kategorie')  q = sb.from(t).select('*').order('sort');
+  if (t === 'fin_haendler_regel') q = sb.from(t).select('*').order('aktualisiert_am', {ascending:false}).limit(2000);
   const { data, error } = await q;
   if (error) throw error;
   return data || [];
@@ -916,11 +937,72 @@ async function loadAUS(){
   const body = $('#body-aus');
   spin(body, 'Belege werden aus Supabase geladen …');
   try{
-    const [belege, kats] = await Promise.all([fetchTable('fin_beleg'), fetchTable('fin_kategorie')]);
-    renderAUS(body, belege, kats);
+    // Regeln + Sync-Protokoll sind optional — der Tab darf daran nie scheitern.
+    const [belege, kats, regeln, syncLog] = await Promise.all([
+      fetchTable('fin_beleg'),
+      fetchTable('fin_kategorie'),
+      fetchTable('fin_haendler_regel').catch(()=>[]),
+      fetchSyncLog().catch(()=>null)
+    ]);
+    renderAUS(body, belege, kats, regeln, syncLog);
   }catch(e){
     errBox(body, 'Ausgaben & Belege konnten nicht geladen werden: ' + friendly(e), ()=>loadAUS());
   }
+}
+// Zeitstempel „02.07.2026, 14:30 Uhr" (lokale Zeit) — für Sync-Läufe & Regel-Stände
+function deTime(ts){
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (isNaN(+d)) return null;
+  return deDate(localIso(d)) + ', ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ' Uhr';
+}
+// Letzter Drive-Sync-Lauf: neueste fin_sync_log-Zeile mit source=drive_sync (Zeitfeld: ts)
+async function fetchSyncLog(){
+  if (MOCK){ // Vorschau-Guard: nur MOCKDB, kein Supabase-Call
+    const rows = (MOCKDB.fin_sync_log || []).filter(r => String(r.source) === 'drive_sync');
+    rows.sort((a,b) => String(b.ts || '').localeCompare(String(a.ts || '')));
+    return rows[0] || null;
+  }
+  sb = await getSb();
+  const { data, error } = await sb.from('fin_sync_log').select('*').eq('source','drive_sync').order('ts', {ascending:false}).limit(1);
+  if (error) throw error;
+  return (data && data[0]) || null;
+}
+/* ---- Händler-Regeln (fin_haendler_regel): lernende Kategorisierung ----
+   WICHTIG: haendler_key = haendler.trim().toLowerCase() — der Drive-Sync liest
+   die Regeln mit exakt demselben Schlüssel; Format nicht ändern. */
+function haendlerKey(h){ return String(h == null ? '' : h).trim().toLowerCase(); }
+async function saveHaendlerRegel(haendler, kategorieId){
+  const row = {
+    haendler_key: haendlerKey(haendler),
+    haendler_anzeige: String(haendler),
+    kategorie_id: kategorieId,
+    quelle: 'korrektur',
+    aktualisiert_am: new Date().toISOString()
+  };
+  if (MOCK){ // Vorschau-Guard: Upsert nur lokal in MOCKDB, kein Supabase-Schreiben
+    const arr = MOCKDB.fin_haendler_regel;
+    const i = arr.findIndex(r => String(r.haendler_key) === row.haendler_key);
+    if (i >= 0){ arr[i] = Object.assign({}, arr[i], row); return Object.assign({}, arr[i]); }
+    arr.unshift(Object.assign({ treffer: 0 }, row));
+    return Object.assign({}, arr[0]);
+  }
+  sb = await getSb();
+  const { data, error } = await sb.from('fin_haendler_regel').upsert(row, { onConflict:'haendler_key' }).select();
+  if (error) throw error;
+  return (data && data[0]) || row;
+}
+async function deleteHaendlerRegel(key){
+  if (MOCK){ // Vorschau-Guard: Delete nur lokal in MOCKDB
+    const arr = MOCKDB.fin_haendler_regel;
+    const i = arr.findIndex(r => String(r.haendler_key) === String(key));
+    if (i >= 0) arr.splice(i, 1);
+    return true;
+  }
+  sb = await getSb();
+  const { data, error } = await sb.from('fin_haendler_regel').delete().eq('haendler_key', key).select();
+  if (error) throw error;
+  return !!(data && data.length); // leer = RLS hat die Löschung nicht freigegeben
 }
 function belegNum(v){
   if (typeof v === 'number' && !isNaN(v)) return v;
@@ -966,9 +1048,36 @@ async function saveBeleg(b, patch){
   Object.assign(b, patch);
   toast('Beleg aktualisiert — Kategorie/Status gespeichert.', true);
 }
-function renderAUS(body, belege, kats){
+function renderAUS(body, belege, kats, regeln, syncLog){
   body.textContent = '';
-  const st = { q:'', von:'', bis:'', kat:'alle', status:'alle', steuer:false };
+  regeln = Array.isArray(regeln) ? regeln.slice() : [];
+  const st = { q:'', von:'', bis:'', kat:'alle', status:'alle', steuer:false,
+               quelle:'alle', konf:'alle', bvon:null, bbis:null, pruefen:false };
+  const regelMap = new Map();
+  function syncRegelMap(){ regelMap.clear(); regeln.forEach(r => regelMap.set(String(r.haendler_key || ''), r)); }
+  syncRegelMap();
+  let regelOffer = null; // nach Kategorie-Korrektur: {id, kategorie_id} → „🧠 Regel merken" anbieten
+
+  // --- Drive-Sync-Statuspanel (fin_sync_log, source=drive_sync) ---
+  const syncStrip = elx('div','notecard syncstrip');
+  syncStrip.id = 'aus-sync';
+  {
+    const head = elx('div','sshead');
+    head.append(elx('b', null, '📁 Google-Drive-Synchronisierung'));
+    const run = elx('span','ssrun');
+    if (syncLog){
+      head.append(elx('span','ssdot' + (String(syncLog.status || 'ok') === 'ok' ? '' : ' err')));
+      const parts = ['Letzter Lauf: ' + (deTime(syncLog.ts) || '—')];
+      if (syncLog.rows != null) parts.push(F(+syncLog.rows || 0) + ' Belege');
+      if (syncLog.note) parts.push(decodeEnt(String(syncLog.note)));
+      run.textContent = parts.join(' · ');
+    } else {
+      run.textContent = 'Noch kein automatischer Lauf';
+    }
+    head.append(run);
+    syncStrip.append(head,
+      elx('div', null, 'Belege in den Google-Drive-Ordner «NEVPAZ Belege/Eingang» legen — sie werden automatisch eingelesen, kategorisiert und erscheinen hier. (Automatik 4×/täglich.)'));
+  }
 
   // --- Filterleiste (clientseitig) ---
   const bar = elx('div','fbar');
@@ -997,7 +1106,54 @@ function renderAUS(body, belege, kats){
   cb.addEventListener('change', ()=>{ st.steuer = cb.checked; rerender(); });
   const cw = elx('label','ff chk');
   cw.append(cb, elx('span', null, 'nur steuerrelevant'));
-  bar.append(fld('Suche', iq, true), fld('Zeitraum von', iv), fld('bis', ib), fld('Kategorie', sk), fld('Status', ss), cw);
+  // — erweiterte Filter: Quelle · KI-Konfidenz · Betrag von/bis · „nur zu prüfen" (aufklappbar) —
+  const fext = elx('div','fext');
+  const sq = document.createElement('select'); sq.id = 'f-aus-quelle';
+  [['alle','Alle'],['scan','Scan'],['drive','Google Drive'],['bank','Bank'],['manuell','Manuell']].forEach(([v,t])=>{
+    const o = document.createElement('option'); o.value = v; o.textContent = t; sq.append(o);
+  });
+  sq.addEventListener('change', ()=>{ st.quelle = sq.value; rerender(); });
+  const skf = document.createElement('select'); skf.id = 'f-aus-konf';
+  [['alle','Alle'],['hoch','sicher ≥ 90 %'],['mittel','mittel 70–90 %'],['niedrig','unsicher < 70 %']].forEach(([v,t])=>{
+    const o = document.createElement('option'); o.value = v; o.textContent = t; skf.append(o);
+  });
+  skf.addEventListener('change', ()=>{ st.konf = skf.value; rerender(); });
+  function numIn(id, ph){
+    const i = document.createElement('input');
+    i.type = 'number'; i.step = '0.01'; i.inputMode = 'decimal'; i.placeholder = ph; i.id = id;
+    return i;
+  }
+  const ibv = numIn('f-aus-bvon','0,00');
+  ibv.addEventListener('input', deb(()=>{ const n = parseFloat(ibv.value); st.bvon = isNaN(n) ? null : n; rerender(); }, 250));
+  const ibb = numIn('f-aus-bbis','∞');
+  ibb.addEventListener('input', deb(()=>{ const n = parseFloat(ibb.value); st.bbis = isNaN(n) ? null : n; rerender(); }, 250));
+  const cp = document.createElement('input'); cp.type = 'checkbox'; cp.id = 'f-aus-pruefen';
+  cp.addEventListener('change', ()=>{ st.pruefen = cp.checked; rerender(); });
+  const cpw = elx('label','ff chk');
+  cpw.title = 'Status „erfasst" oder KI-Konfidenz unter 70 % — Belege, die Aufmerksamkeit brauchen';
+  cpw.append(cp, elx('span', null, 'nur zu prüfen'));
+  const fbv = fld('Betrag von (€)', ibv); fbv.classList.add('betr');
+  const fbb = fld('bis (€)', ibb);        fbb.classList.add('betr');
+  fext.append(fld('Quelle', sq), fld('KI-Konfidenz', skf), fbv, fbb, cpw);
+  const more = elx('button','btn ghost sm fmore');
+  more.type = 'button'; more.id = 'f-aus-more';
+  const moreTxt = elx('span', null, 'Mehr Filter ▸');
+  const moreCnt = elx('span','fcount','');
+  moreCnt.style.display = 'none';
+  more.append(moreTxt, moreCnt);
+  let extOpen = false;
+  more.addEventListener('click', ()=>{
+    extOpen = !extOpen;
+    fext.classList.toggle('on', extOpen);
+    moreTxt.textContent = extOpen ? 'Weniger Filter ▾' : 'Mehr Filter ▸';
+  });
+  function updateMore(){
+    const n = (st.quelle !== 'alle' ? 1 : 0) + (st.konf !== 'alle' ? 1 : 0)
+            + (st.bvon != null ? 1 : 0) + (st.bbis != null ? 1 : 0) + (st.pruefen ? 1 : 0);
+    moreCnt.textContent = String(n);
+    moreCnt.style.display = n ? 'inline-block' : 'none';
+  }
+  bar.append(fld('Suche', iq, true), fld('Zeitraum von', iv), fld('bis', ib), fld('Kategorie', sk), fld('Status', ss), cw, more, fext);
 
   // --- Gerüst: KPIs → Charts → Zähler → Tabelle → Summenzeile → Hinweis ---
   const kpiWrap = elx('div','grid g4');
@@ -1009,7 +1165,70 @@ function renderAUS(body, belege, kats){
   const out  = elx('div');
   const sums = elx('div','sumline');
   const hint = elx('div','hintfoot','ℹ️ Kategorien sind KI-Vorschläge — vor DATEV-Export prüfen.');
-  body.append(bar, kpiWrap, g2, info, out, sums, hint);
+
+  // --- Karte „Gelernte Händler-Regeln" (aufklappbar, mit Löschen) ---
+  const regelCard = elx('div','card regelcard');
+  regelCard.id = 'aus-regeln';
+  const regelDet  = document.createElement('details');
+  const regelSum  = document.createElement('summary');
+  const regelBody = elx('div');
+  regelDet.append(regelSum, regelBody);
+  regelCard.append(regelDet);
+  function renderRegeln(){
+    regelSum.textContent = '🧠 Gelernte Händler-Regeln (' + F(regeln.length) + ')';
+    regelBody.textContent = '';
+    regelBody.append(elx('div','rsub','Über „Regel merken" gespeicherte Zuordnungen — der Drive-Sync kategorisiert neue Belege dieser Händler automatisch.'));
+    if (!regeln.length){
+      regelBody.append(elx('div','empty','Noch keine Regeln gelernt — nach einer Kategorie-Korrektur erscheint „🧠 Regel merken" direkt am Beleg.'));
+      return;
+    }
+    const wrap  = elx('div','tscroll');
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trh   = document.createElement('tr');
+    [['Händler'],['Kategorie'],['Treffer','num'],['Quelle'],['Aktualisiert'],['']].forEach(([t, cls])=>{
+      const th = document.createElement('th');
+      th.textContent = t;
+      if (cls) th.className = cls;
+      trh.append(th);
+    });
+    thead.append(trh); table.append(thead);
+    const tbody = document.createElement('tbody');
+    regeln.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.append(elx('td', null, decodeEnt(String(r.haendler_anzeige || r.haendler_key || '—'))));
+      tr.append(elx('td', null, katName(kats, r.kategorie_id)));
+      tr.append(elx('td','num', r.treffer == null ? '—' : F(+r.treffer || 0)));
+      tr.append(elx('td', null, String(r.quelle || '—')));
+      tr.append(elx('td', null, r.aktualisiert_am ? deDate(r.aktualisiert_am) : '—'));
+      const tdX = document.createElement('td');
+      const del = elx('button','btn ghost sm dngr','Löschen');
+      del.type = 'button';
+      del.addEventListener('click', async ()=>{
+        del.disabled = true;
+        try{
+          const ok = await deleteHaendlerRegel(String(r.haendler_key));
+          if (!ok) throw new Error('Die Regel wurde serverseitig nicht entfernt (fehlende Berechtigung).');
+          regeln = regeln.filter(x => String(x.haendler_key) !== String(r.haendler_key));
+          syncRegelMap();
+          toast('Regel für «' + decodeEnt(String(r.haendler_anzeige || r.haendler_key)) + '» gelöscht.', true);
+          renderRegeln();
+          rerender();
+        }catch(e){
+          del.disabled = false;
+          toast('Regel konnte nicht gelöscht werden: ' + friendly(e));
+        }
+      });
+      tdX.append(del);
+      tr.append(tdX);
+      tbody.append(tr);
+    });
+    table.append(tbody);
+    wrap.append(table);
+    regelBody.append(wrap);
+  }
+  renderRegeln();
+  body.append(syncStrip, bar, kpiWrap, g2, info, out, sums, regelCard, hint);
 
   const fmtMon = k => { const d = new Date(k + '-01T00:00:00'); return isNaN(+d) ? k : d.toLocaleDateString('de-DE', {month:'short', year:'2-digit'}); };
   function match(b){
@@ -1023,6 +1242,23 @@ function renderAUS(body, belege, kats){
     if (st.kat !== 'alle' && String(b.kategorie_id == null ? '' : b.kategorie_id) !== st.kat) return false;
     if (st.status !== 'alle' && String(b.status || '') !== st.status) return false;
     if (st.steuer && !b.steuerrelevant) return false;
+    if (st.quelle !== 'alle' && String(b.quelle || '') !== st.quelle) return false;
+    if (st.konf !== 'alle'){
+      const c = (typeof b.ki_konfidenz === 'number' && !isNaN(b.ki_konfidenz)) ? b.ki_konfidenz : null;
+      if (c == null) return false;
+      if (st.konf === 'hoch'    && c < 0.9) return false;
+      if (st.konf === 'mittel'  && (c < 0.7 || c >= 0.9)) return false;
+      if (st.konf === 'niedrig' && c >= 0.7) return false;
+    }
+    if (st.bvon != null || st.bbis != null){
+      const v = belegNum(b.betrag_brutto);
+      if (st.bvon != null && v < st.bvon) return false;
+      if (st.bbis != null && v > st.bbis) return false;
+    }
+    if (st.pruefen){
+      const c = (typeof b.ki_konfidenz === 'number' && !isNaN(b.ki_konfidenz)) ? b.ki_konfidenz : null;
+      if (!(String(b.status || '') === 'erfasst' || (c != null && c < 0.7))) return false;
+    }
     return true;
   }
 
@@ -1033,9 +1269,16 @@ function renderAUS(body, belege, kats){
     tdD.textContent = b.beleg_datum ? deDate(b.beleg_datum) : '—';
     tdD.style.whiteSpace = 'nowrap';
     tr.append(tdD);
-    // Händler (+ Beschreibung als Nebenzeile)
+    // Händler (+ Beschreibung als Nebenzeile · 🧠 bei aktiver Händler-Regel)
     const tdH = document.createElement('td');
-    tdH.append(elx('div', null, decodeEnt(String(b.haendler || '—'))));
+    const hline = elx('div', null, decodeEnt(String(b.haendler || '—')));
+    const aktiveRegel = regelMap.get(haendlerKey(b.haendler));
+    if (aktiveRegel){
+      const ic = elx('span','brainic','🧠');
+      ic.title = 'Händler-Regel aktiv: neue Belege werden automatisch als „' + katName(kats, aktiveRegel.kategorie_id) + '" einsortiert.';
+      hline.append(ic);
+    }
+    tdH.append(hline);
     if (b.beschreibung) tdH.append(elx('div','blsub', decodeEnt(String(b.beschreibung))));
     tr.append(tdH);
     // Kategorie-Korrektur (Inline-Select)
@@ -1047,6 +1290,31 @@ function renderAUS(body, belege, kats){
     if (kv && !kats.some(k => String(k.id) === kv)){ const o = document.createElement('option'); o.value = kv; o.textContent = kv; selK.append(o); }
     selK.value = kv;
     tdK.append(selK);
+    // Nach Kategorie-Korrektur: dezenter Lern-Button „🧠 Regel: immer für «Händler»"
+    if (regelOffer && String(regelOffer.id) === String(b.id) && String(b.haendler || '').trim()){
+      const hn = decodeEnt(String(b.haendler)).trim();
+      const rb = elx('button','btn ghost sm rulebtn','🧠 Regel: immer für «' + (hn.length > 24 ? hn.slice(0,23) + '…' : hn) + '»');
+      rb.type = 'button';
+      rb.title = 'Künftige Belege von „' + hn + '" automatisch als „' + katName(kats, regelOffer.kategorie_id) + '" einsortieren'
+               + (regelMap.has(haendlerKey(b.haendler)) ? ' (ersetzt die bestehende Regel).' : '.');
+      rb.addEventListener('click', async ()=>{
+        rb.disabled = true;
+        try{
+          const saved = await saveHaendlerRegel(String(b.haendler), regelOffer.kategorie_id);
+          const i = regeln.findIndex(r => String(r.haendler_key) === String(saved.haendler_key));
+          if (i >= 0) regeln[i] = Object.assign({}, regeln[i], saved); else regeln.unshift(saved);
+          syncRegelMap();
+          regelOffer = null;
+          toast('Regel gemerkt — künftige Belege von «' + hn + '» werden automatisch als «' + katName(kats, saved.kategorie_id) + '» einsortiert.', true);
+          renderRegeln();
+          rerender();
+        }catch(e){
+          rb.disabled = false;
+          toast('Regel konnte nicht gespeichert werden: ' + friendly(e));
+        }
+      });
+      tdK.append(rb);
+    }
     tr.append(tdK);
     // Beträge
     const money = v => { const td = document.createElement('td'); td.className = 'num'; td.textContent = (v == null || v === '') ? '—' : EUR(belegNum(v)); return td; };
@@ -1083,6 +1351,18 @@ function renderAUS(body, belege, kats){
       selK.disabled = selS.disabled = true;
       try{
         await saveBeleg(b, patch);
+        // Kategorie geändert → „Regel merken" für diesen Beleg anbieten (nur mit Händler,
+        // nicht bei „ohne Kategorie", nicht wenn dieselbe Regel bereits existiert)
+        if (kSel !== kv){
+          if (patch.kategorie_id != null && String(b.haendler || '').trim()){
+            const ex = regelMap.get(haendlerKey(b.haendler));
+            regelOffer = (ex && String(ex.kategorie_id) === String(patch.kategorie_id))
+              ? null
+              : { id: b.id, kategorie_id: patch.kategorie_id };
+          } else if (regelOffer && String(regelOffer.id) === String(b.id)){
+            regelOffer = null;
+          }
+        }
         rerender(); // KPIs, Charts und Summen sofort nachziehen
       }catch(e){
         selK.value = kv;
@@ -1123,6 +1403,7 @@ function renderAUS(body, belege, kats){
     if (rows.length > 500) container.append(elx('div','finfo','Anzeige auf die ersten 500 Zeilen begrenzt — bitte Filter nutzen.'));
   }
   function rerender(){
+    updateMore();
     const rows = belege.filter(match);
     const sBrutto = rows.reduce((s,b)=> s + belegNum(b.betrag_brutto), 0);
     const sNetto  = rows.reduce((s,b)=> s + belegNum(b.betrag_netto), 0);
@@ -2107,87 +2388,87 @@ const MOCK_BELEGE = [
   { id:'BLG-BSP-0107', beleg_datum:'2026-07-01', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Juli 2026',
     betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
-    storage_pfad:'2026/07/bsp-miete.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/07/bsp-miete.pdf', quelle:'drive' },
   { id:'BLG-BSP-0106', beleg_datum:'2026-06-27', haendler:'MedShop Praxisbedarf AG', beschreibung:'Verbrauchsmaterial Diagnostik (Elektroden, Desinfektion)',
     betrag_netto:312.60, mwst_satz:19, mwst_betrag:59.39, betrag_brutto:371.99, kategorie_id:'praxisbedarf', status:'geprüft',
     steuerrelevant:true, ki_konfidenz:0.92, ki_begruendung:'Positionen passen zu medizinischem Verbrauchsmaterial.',
-    storage_pfad:'2026/06/bsp-praxisbedarf.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/06/bsp-praxisbedarf.pdf', quelle:'scan' },
   { id:'BLG-BSP-0105', beleg_datum:'2026-06-24', haendler:'clinicos.ai GmbH', beschreibung:'PVS-Lizenz Juni 2026',
     betrag_netto:289.00, mwst_satz:19, mwst_betrag:54.91, betrag_brutto:343.91, kategorie_id:'software', status:'erfasst',
     steuerrelevant:true, ki_konfidenz:0.94, ki_begruendung:'SaaS-Abo-Rechnung mit ausgewiesenem Leistungszeitraum.',
-    storage_pfad:'2026/06/bsp-software.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/06/bsp-software.pdf', quelle:'scan' },
   { id:'BLG-BSP-0104', beleg_datum:'2026-06-18', haendler:'Ärztekammer Hamburg', beschreibung:'Fortbildung Neuropsychopharmakologie (CME)',
     betrag_netto:480.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:480.00, kategorie_id:'fortbildung', status:'erfasst',
     steuerrelevant:true, ki_konfidenz:0.78, ki_begruendung:'Teilnahmegebühr ohne USt — vermutlich umsatzsteuerbefreite Fortbildung.',
-    storage_pfad:'2026/06/bsp-fortbildung.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/06/bsp-fortbildung.pdf', quelle:'manuell' },
   { id:'BLG-BSP-0103', beleg_datum:'2026-06-12', haendler:'Telekom Deutschland GmbH', beschreibung:'Festnetz & Internet Praxisanschluss',
     betrag_netto:89.08, mwst_satz:19, mwst_betrag:16.92, betrag_brutto:106.00, kategorie_id:'telekommunikation', status:'geprüft',
     steuerrelevant:true, ki_konfidenz:0.91, ki_begruendung:'Monatsrechnung Telekommunikation, Anschlussadresse = Praxis.',
-    storage_pfad:'2026/06/bsp-telekom.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/06/bsp-telekom.pdf', quelle:'drive' },
   { id:'BLG-BSP-0102', beleg_datum:'2026-06-05', haendler:'Aral Tankstelle Alsterufer', beschreibung:'Kraftstoff Praxisfahrzeug',
     betrag_netto:71.34, mwst_satz:19, mwst_betrag:13.55, betrag_brutto:84.89, kategorie_id:'kfz', status:'erfasst',
     steuerrelevant:false, ki_konfidenz:0.62, ki_begruendung:'Tankbeleg ohne Fahrzeugzuordnung — bitte privat/geschäftlich prüfen.',
-    storage_pfad:null, quelle:'beispiel' },
+    storage_pfad:null, quelle:'scan' },
   { id:'BLG-BSP-0101', beleg_datum:'2026-06-30', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben Juni 2026',
     betrag_netto:52400.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:52400.00, kategorie_id:'personal', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
-    storage_pfad:'2026/06/bsp-lohn-juni.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/06/bsp-lohn-juni.pdf', quelle:'drive' },
   { id:'BLG-BSP-0100', beleg_datum:'2026-06-01', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Juni 2026',
     betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
-    storage_pfad:'2026/06/bsp-miete-juni.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/06/bsp-miete-juni.pdf', quelle:'drive' },
   { id:'BLG-BSP-0099', beleg_datum:'2026-05-30', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben Mai 2026',
     betrag_netto:51900.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:51900.00, kategorie_id:'personal', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
-    storage_pfad:'2026/05/bsp-lohn-mai.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/05/bsp-lohn-mai.pdf', quelle:'drive' },
   { id:'BLG-BSP-0098', beleg_datum:'2026-05-15', haendler:'IVS Medizintechnik GmbH', beschreibung:'Wartung EEG-Arbeitsplatz (Jahresservice)',
     betrag_netto:580.00, mwst_satz:19, mwst_betrag:110.20, betrag_brutto:690.20, kategorie_id:'praxisbedarf', status:'geprüft',
     steuerrelevant:true, ki_konfidenz:0.88, ki_begruendung:'Servicebericht Medizintechnik — Betriebsausgabe Gerätewartung.',
-    storage_pfad:'2026/05/bsp-eeg-wartung.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/05/bsp-eeg-wartung.pdf', quelle:'drive' },
   { id:'BLG-BSP-0097', beleg_datum:'2026-05-04', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Mai 2026',
     betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
-    storage_pfad:'2026/05/bsp-miete-mai.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/05/bsp-miete-mai.pdf', quelle:'drive' },
   { id:'BLG-BSP-0096', beleg_datum:'2026-05-02', haendler:'clinicos.ai GmbH', beschreibung:'PVS-Lizenz Mai 2026',
     betrag_netto:289.00, mwst_satz:19, mwst_betrag:54.91, betrag_brutto:343.91, kategorie_id:'software', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.94, ki_begruendung:'SaaS-Abo-Rechnung mit ausgewiesenem Leistungszeitraum.',
-    storage_pfad:'2026/05/bsp-software-mai.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/05/bsp-software-mai.pdf', quelle:'scan' },
   { id:'BLG-BSP-0095', beleg_datum:'2026-04-29', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben April 2026',
     betrag_netto:51900.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:51900.00, kategorie_id:'personal', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
-    storage_pfad:'2026/04/bsp-lohn-april.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/04/bsp-lohn-april.pdf', quelle:'drive' },
   { id:'BLG-BSP-0094', beleg_datum:'2026-04-10', haendler:'Hogrefe Verlag GmbH', beschreibung:'Testverfahren & Auswertungsbögen ADHS-Diagnostik',
     betrag_netto:759.20, mwst_satz:7, mwst_betrag:53.14, betrag_brutto:812.34, kategorie_id:'praxisbedarf', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.90, ki_begruendung:'Fachverlag-Rechnung für psychologische Testverfahren — Praxisbedarf.',
-    storage_pfad:'2026/04/bsp-hogrefe.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/04/bsp-hogrefe.pdf', quelle:'drive' },
   { id:'BLG-BSP-0093', beleg_datum:'2026-04-01', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete April 2026',
     betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
-    storage_pfad:'2026/04/bsp-miete-april.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/04/bsp-miete-april.pdf', quelle:'drive' },
   { id:'BLG-BSP-0092', beleg_datum:'2026-03-31', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben März 2026',
     betrag_netto:50750.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:50750.00, kategorie_id:'personal', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
-    storage_pfad:'2026/03/bsp-lohn-maerz.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/03/bsp-lohn-maerz.pdf', quelle:'drive' },
   { id:'BLG-BSP-0091', beleg_datum:'2026-03-09', haendler:'Signal Iduna Gruppe', beschreibung:'Praxis- & Berufshaftpflicht Q2/2026',
     betrag_netto:486.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:486.00, kategorie_id:'sonstiges', status:'geprüft',
     steuerrelevant:true, ki_konfidenz:0.84, ki_begruendung:'Versicherungsbeitrag (USt-frei) — Betriebsausgabe Versicherung.',
-    storage_pfad:'2026/03/bsp-versicherung.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/03/bsp-versicherung.pdf', quelle:'bank' },
   { id:'BLG-BSP-0090', beleg_datum:'2026-03-02', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete März 2026',
     betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
-    storage_pfad:'2026/03/bsp-miete-maerz.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/03/bsp-miete-maerz.pdf', quelle:'drive' },
   { id:'BLG-BSP-0089', beleg_datum:'2026-02-27', haendler:'NEVPAZ Praxisteam (Lohnlauf)', beschreibung:'Gehälter & Sozialabgaben Februar 2026',
     betrag_netto:50750.00, mwst_satz:0, mwst_betrag:0.00, betrag_brutto:50750.00, kategorie_id:'personal', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.99, ki_begruendung:'Lohnjournal des Steuerbüros — eindeutig Personalkosten.',
-    storage_pfad:'2026/02/bsp-lohn-februar.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/02/bsp-lohn-februar.pdf', quelle:'drive' },
   { id:'BLG-BSP-0088', beleg_datum:'2026-02-13', haendler:'Bürobedarf Nord GmbH', beschreibung:'Druckerpapier, Toner, Ordner',
     betrag_netto:180.35, mwst_satz:19, mwst_betrag:34.27, betrag_brutto:214.62, kategorie_id:'sonstiges', status:'geprüft',
     steuerrelevant:true, ki_konfidenz:0.81, ki_begruendung:'Sammelrechnung Büromaterial — laufender Praxisbedarf.',
-    storage_pfad:'2026/02/bsp-buero.pdf', quelle:'beispiel' },
+    storage_pfad:'2026/02/bsp-buero.pdf', quelle:'scan' },
   { id:'BLG-BSP-0087', beleg_datum:'2026-02-02', haendler:'Hausverwaltung Elbkontor GmbH', beschreibung:'Praxismiete Februar 2026',
     betrag_netto:4200.00, mwst_satz:19, mwst_betrag:798.00, betrag_brutto:4998.00, kategorie_id:'miete', status:'exportiert',
     steuerrelevant:true, ki_konfidenz:0.97, ki_begruendung:'Dauermietrechnung mit ausgewiesener USt — eindeutig Raumkosten.',
-    storage_pfad:'2026/02/bsp-miete-februar.pdf', quelle:'beispiel' }
+    storage_pfad:'2026/02/bsp-miete-februar.pdf', quelle:'drive' }
 ];
 // Beispiel-Prognosen (fin_prognose) — konsistent aus den Mock-Reihen oben abgeleitet
 // (Einnahmen = Mock-PAS-Monatsumsätze, Ausgaben = Mock-Beleg-Summen; Juli gilt als angebrochen).
@@ -2230,10 +2511,28 @@ const MOCK_PROGNOSE = (function(){
     fRow('basis', 486000, 214000, 0.386), fRow('optimistisch', 524880, 218280, 0.392), fRow('vorsichtig', 427680, 222560, 0.372)
   ];
 })();
+// Beispiel-Händlerregeln (fin_haendler_regel) — Schlüssel = haendler.trim().toLowerCase()
+const MOCK_REGELN = [
+  { haendler_key:'hausverwaltung elbkontor gmbh', haendler_anzeige:'Hausverwaltung Elbkontor GmbH', kategorie_id:'miete',
+    treffer:6, quelle:'korrektur', erstellt_am:'2026-02-03T09:05:00+01:00', aktualisiert_am:'2026-06-01T08:15:00+02:00' },
+  { haendler_key:'telekom deutschland gmbh', haendler_anzeige:'Telekom Deutschland GmbH', kategorie_id:'telekommunikation',
+    treffer:5, quelle:'korrektur', erstellt_am:'2026-03-12T11:40:00+01:00', aktualisiert_am:'2026-06-12T10:02:00+02:00' },
+  { haendler_key:'clinicos.ai gmbh', haendler_anzeige:'clinicos.ai GmbH', kategorie_id:'software',
+    treffer:4, quelle:'drive_sync', erstellt_am:'2026-04-02T07:55:00+02:00', aktualisiert_am:'2026-06-24T06:45:00+02:00' }
+];
+// Beispiel-Sync-Protokoll (fin_sync_log) — nur die drive_sync-Zeilen speisen das Statuspanel
+const MOCK_SYNC_LOG = [
+  { id:412, ts:'2026-07-02T14:30:00+02:00', source:'drive_sync', status:'ok', rows:3,
+    note:'3 Belege aus «NEVPAZ Belege/Eingang» eingelesen · 2 per Händler-Regel, 1 per KI kategorisiert' },
+  { id:398, ts:'2026-07-02T08:30:00+02:00', source:'drive_sync', status:'ok', rows:0, note:'kein neuer Beleg im Eingang' },
+  { id:377, ts:'2026-07-01T20:30:00+02:00', source:'sync', status:'ok', rows:64, note:'clinicos=52 mahn=5 pas=7' }
+];
 const MOCKDB = {
   fin_beleg: MOCK_BELEGE,
   fin_kategorie: MOCK_KATS,
   fin_prognose: MOCK_PROGNOSE,
+  fin_haendler_regel: MOCK_REGELN,
+  fin_sync_log: MOCK_SYNC_LOG,
   fin_umsatz_tag: mockTage(),
   fin_pas_kpi: [
     { stichtag:'2026-07-02', kind:'turnover_monthly', periode:'Feb', betrag:149832.21, meta:null },
