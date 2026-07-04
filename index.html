@@ -202,6 +202,41 @@ details pre{background:rgba(19,32,56,.05);padding:10px;border-radius:8px;font-si
 .notecard code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:rgba(19,32,56,.06);padding:2px 6px;border-radius:6px;color:var(--navy);word-break:break-all}
 .progfoot{margin-top:18px;font-size:11.5px;color:var(--ink3t);border-top:1px dashed var(--line);padding-top:12px}
 @media(max-width:700px){.assum{grid-template-columns:1fr;gap:2px 0}.assum .k{padding-top:10px}}
+/* ---------- Sync-Ordner (Ordner-Verwaltung) ---------- */
+.b-navy{background:rgba(28,46,78,.10);color:var(--navy3);border:1px solid rgba(28,46,78,.35)}
+.ordlist{display:flex;flex-direction:column;gap:12px}
+.ordcard{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;background:#FFFDF7;border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 19px;position:relative;overflow:hidden;transition:.2s}
+.ordcard:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--goldgrad);opacity:.85}
+.ordcard:hover{box-shadow:var(--sh);border-color:rgba(198,161,91,.5)}
+.ordcard.inaktiv{opacity:.62}
+.ordcard.inaktiv:before{background:rgba(90,100,120,.35)}
+.ordcard .oinfo{flex:1;min-width:0}
+.ordcard .olabel{font-weight:700;color:var(--navy);font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ordcard .opfad{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);margin-top:7px;word-break:break-all;display:inline-block;background:rgba(19,32,56,.045);padding:3px 8px;border-radius:7px}
+.ordcard .oprev{font-size:11.5px;color:var(--ink2);margin-top:5px;word-break:break-all}
+.ordcard .oprev b{color:var(--grn);font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11.5px}
+.ordcard .ometa{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;align-items:center}
+.ordcard .oacts{display:flex;flex-direction:column;gap:10px;align-items:flex-end;flex-shrink:0}
+.ordcard .obtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.switch{position:relative;display:inline-flex;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
+.switch .sl{position:absolute;inset:0;background:rgba(19,32,56,.16);border:1px solid var(--line);border-radius:999px;transition:.2s;pointer-events:none}
+.switch .sl:before{content:"";position:absolute;height:17px;width:17px;left:3px;top:2.5px;background:#FFFDF7;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(19,32,56,.35)}
+.switch input:checked + .sl{background:var(--goldgrad);border-color:rgba(166,134,63,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 8px rgba(198,161,91,.35)}
+.switch input:checked + .sl:before{transform:translateX(17px)}
+.switch input:focus-visible + .sl{outline:2px solid rgba(198,161,91,.6);outline-offset:2px}
+.switch input:disabled + .sl{opacity:.5}
+.ordform{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;margin-top:4px}
+.ordform .ff input:not([type=checkbox]),.ordform .ff select{width:100%}
+.ordform .full{grid-column:1 / -1}
+.ordprev{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--grn);margin-top:5px;word-break:break-all;line-height:1.5;font-weight:600}
+.ordprev.warn{color:var(--red)}
+@media(max-width:700px){
+.ordform{grid-template-columns:1fr}
+.ordcard{flex-direction:column;gap:10px}
+.ordcard .oacts{flex-direction:row;width:100%;justify-content:space-between;align-items:center}
+.ordcard .obtns{justify-content:flex-end}
+}
 /* ---------- Detail ---------- */
 .detail{margin-bottom:16px}
 .dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
@@ -349,6 +384,7 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
       <a data-t="ov" class="on"><span class="i">◈</span>Übersicht</a>
       <div class="grp">Ausgaben</div>
       <a data-t="aus"><span class="i">🧾</span>Ausgaben &amp; Belege</a>
+      <a data-t="ord"><span class="i">📁</span>Sync-Ordner</a>
       <div class="grp">Steuern</div>
       <a data-t="prog"><span class="i">📈</span>Prognose &amp; Steuern</a>
       <div class="grp">PHI · Live</div>
@@ -381,6 +417,11 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
         <h2 class="tt">Ausgaben &amp; Belege</h2>
         <div class="ts">Belege aus dem Ausgaben-Postfach — KI-kategorisiert · Korrekturen fließen direkt nach Supabase (aal2)</div>
         <div class="tabbody" id="body-aus"></div>
+      </section>
+      <section class="tab" id="t-ord">
+        <h2 class="tt">Sync-Ordner</h2>
+        <div class="ts">Welche Beleg-Ordner die Automatik überwacht — Google Drive („Meine Ablage“) oder lokaler Cockpit-Ordner, mit Datums-Platzhaltern · Änderungen wirken ab dem nächsten Lauf (4×/täglich)</div>
+        <div class="tabbody" id="body-ord"></div>
       </section>
       <section class="tab" id="t-prog">
         <h2 class="tt">Prognose &amp; Steuern</h2>
@@ -773,7 +814,7 @@ async function doLogout(){
 // ---------------- App-Shell (Tabs) ----------------
 let loaded = {};
 let appWired = false;
-const LOADERS = { ov: loadOV, aus: loadAUS, prog: loadPROG, pat: initPat, re: loadRE, za: loadZA, mahn: loadMJ };
+const LOADERS = { ov: loadOV, aus: loadAUS, ord: loadORD, prog: loadPROG, pat: initPat, re: loadRE, za: loadZA, mahn: loadMJ };
 
 async function enterApp(){
   if (!MOCK){
@@ -817,6 +858,7 @@ async function fetchTable(t){
   if (t === 'fin_beleg')      q = sb.from(t).select('*').order('beleg_datum', {ascending:false}).limit(4000);
   if (t === 'fin_kategorie')  q = sb.from(t).select('*').order('sort');
   if (t === 'fin_haendler_regel') q = sb.from(t).select('*').order('aktualisiert_am', {ascending:false}).limit(2000);
+  if (t === 'fin_sync_ordner')    q = sb.from(t).select('*').order('sortierung', {ascending:true}).order('label', {ascending:true}).limit(500);
   const { data, error } = await q;
   if (error) throw error;
   return data || [];
@@ -1076,7 +1118,7 @@ function renderAUS(body, belege, kats, regeln, syncLog){
     }
     head.append(run);
     syncStrip.append(head,
-      elx('div', null, 'Belege in den Google-Drive-Ordner «NEVPAZ Belege/Eingang» legen — sie werden automatisch eingelesen, kategorisiert und erscheinen hier. (Automatik 4×/täglich.)'));
+      elx('div', null, 'Belege in einen der überwachten Ordner legen — sie werden automatisch eingelesen, kategorisiert und erscheinen hier. (Automatik 4×/täglich.) Welche Ordner überwacht werden, steuerst du im Tab „Sync-Ordner“.'));
   }
 
   // --- Filterleiste (clientseitig) ---
@@ -1449,6 +1491,364 @@ function renderAUS(body, belege, kats, regeln, syncLog){
     }
   }
   rerender();
+}
+
+// ---------------- Tab „Sync-Ordner" (Supabase fin_sync_ordner, RLS aal2) ----------------
+/* KONTRAKT (muss exakt zum Sync-Daemon passen — bei Änderungen beide Seiten anfassen):
+   · basis 'drive' = Google Drive, Wurzel „Meine Ablage" · basis 'vault' = lokaler
+     Cockpit-Ordner (scripts/fin_cockpit) auf dem Praxis-Rechner.
+   · Platzhalter im rel_pfad: {jahr} = aktuelles Jahr, {jahr-1} = Vorjahr,
+     {monat} = aktueller Monat (MM) — werden bei jedem Lauf frisch ersetzt.
+   · Überwacht wird <Basis>/<rel_pfad mit ersetzten Platzhaltern>.
+   · Sicherheit: Der Daemon beschränkt Pfade serverseitig auf die beiden Basen
+     (kein „..", kein absoluter Pfad) — die UI-Validierung ist nur eine Vorab-Warnung. */
+const ORD_BASIS = {
+  drive: { label:'Google Drive', root:'Meine Ablage',        badge:'b-gold', hint:'Google Drive — Wurzel „Meine Ablage"' },
+  vault: { label:'Lokal',        root:'scripts/fin_cockpit', badge:'b-navy', hint:'Lokaler Cockpit-Ordner (scripts/fin_cockpit) auf dem Praxis-Rechner' }
+};
+const ORD_QUELLEN = [['scan','Scan'],['drive','Google Drive'],['bank','Bank'],['manuell','Manuell']];
+function ordQuelleLabel(q){
+  const hit = ORD_QUELLEN.find(x => x[0] === String(q));
+  return hit ? hit[1] : String(q == null || q === '' ? '—' : q);
+}
+function ordResolve(rel){
+  const now = new Date();
+  const jahr = now.getFullYear();
+  return String(rel == null ? '' : rel)
+    .replace(/\{jahr-1\}/g, String(jahr - 1))
+    .replace(/\{jahr\}/g,   String(jahr))
+    .replace(/\{monat\}/g,  String(now.getMonth() + 1).padStart(2, '0'));
+}
+function ordVollPfad(basis, rel){
+  const b = ORD_BASIS[String(basis)] || ORD_BASIS.drive;
+  const r = ordResolve(rel).replace(/^\/+/, '').replace(/\/+$/, '');
+  return b.root + (r ? '/' + r : '');
+}
+function ordRelFehler(rel){
+  if (rel.startsWith('/')) return 'Der Pfad ist relativ zur Basis — bitte ohne führenden „/" angeben.';
+  if (rel.includes('..'))  return '„.." ist im Pfad nicht erlaubt — der Pfad bleibt innerhalb der Basis.';
+  return null;
+}
+async function saveSyncOrdner(patch, id){
+  const row = Object.assign({}, patch, { aktualisiert_am: new Date().toISOString() });
+  if (MOCK){ // Vorschau-Guard: CRUD nur lokal in MOCKDB, kein Supabase-Call
+    const arr = MOCKDB.fin_sync_ordner;
+    if (id != null){
+      const i = arr.findIndex(r => String(r.id) === String(id));
+      if (i >= 0) arr[i] = Object.assign({}, arr[i], row);
+    } else {
+      arr.push(Object.assign({ id: 'ORD-MOCK-' + Date.now() }, row));
+    }
+    return;
+  }
+  sb = await getSb();
+  if (id != null){
+    const { data, error } = await sb.from('fin_sync_ordner').update(row).eq('id', id).select();
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('Der Ordner wurde serverseitig nicht aktualisiert (fehlende Berechtigung).');
+  } else {
+    const { error } = await sb.from('fin_sync_ordner').insert(row);
+    if (error) throw error;
+  }
+}
+async function deleteSyncOrdner(id){
+  if (MOCK){ // Vorschau-Guard: Delete nur lokal in MOCKDB
+    const arr = MOCKDB.fin_sync_ordner;
+    const i = arr.findIndex(r => String(r.id) === String(id));
+    if (i >= 0) arr.splice(i, 1);
+    return true;
+  }
+  sb = await getSb();
+  const { data, error } = await sb.from('fin_sync_ordner').delete().eq('id', id).select();
+  if (error) throw error;
+  return !!(data && data.length); // leer = RLS hat die Löschung nicht freigegeben
+}
+async function loadORD(){
+  const body = $('#body-ord');
+  spin(body, 'Sync-Ordner werden aus Supabase geladen …');
+  try{
+    const rows = await fetchTable('fin_sync_ordner');
+    renderORD(body, rows);
+  }catch(e){
+    errBox(body, 'Die Sync-Ordner konnten nicht geladen werden: ' + friendly(e), ()=>loadORD());
+  }
+}
+function renderORD(body, rows){
+  body.textContent = '';
+  rows = Array.isArray(rows) ? rows.slice() : [];
+  rows.sort((a,b)=>{
+    const x = (a.sortierung == null || a.sortierung === '') ? Number.MAX_SAFE_INTEGER : +a.sortierung;
+    const y = (b.sortierung == null || b.sortierung === '') ? Number.MAX_SAFE_INTEGER : +b.sortierung;
+    if (x !== y) return x - y;
+    return String(a.label || '').localeCompare(String(b.label || ''), 'de');
+  });
+  function codeEl(t){ const c = document.createElement('code'); c.textContent = t; return c; }
+
+  // --- Hilfe-Karte: Basis, Platzhalter, Automatik, Sicherheit (Kontrakt gespiegelt) ---
+  const help = elx('div','notecard');
+  {
+    const l0 = elx('div');
+    l0.append(elx('b', null, '📁 So funktionieren die Sync-Ordner: '),
+      document.createTextNode('Die Beleg-Automatik läuft 4×/täglich, liest alle aktiven Ordner dieser Liste und holt neue Belege ins Cockpit — weil Belege je nach Jahr in wechselnden Ordnern liegen, pflegst du die Liste hier selbst.'));
+    const l1 = elx('div'); l1.style.marginTop = '8px';
+    l1.append(elx('b', null, 'Basis: '),
+      codeEl('Google Drive'), document.createTextNode(' = Wurzel „Meine Ablage" · '),
+      codeEl('Lokal'), document.createTextNode(' = Cockpit-Ordner ('), codeEl('scripts/fin_cockpit'),
+      document.createTextNode(') auf dem Praxis-Rechner. Überwacht wird immer Basis + „/" + Pfad.'));
+    const l2 = elx('div'); l2.style.marginTop = '8px';
+    l2.append(elx('b', null, 'Platzhalter im Pfad: '),
+      codeEl('{jahr}'), document.createTextNode(' → ' + ordResolve('{jahr}') + ' · '),
+      codeEl('{jahr-1}'), document.createTextNode(' → ' + ordResolve('{jahr-1}') + ' · '),
+      codeEl('{monat}'), document.createTextNode(' → ' + ordResolve('{monat}') + ' — sie werden bei jedem Lauf mit dem aktuellen Datum ersetzt, die Überwachung wandert beim Jahreswechsel also automatisch mit.'));
+    const l3 = elx('div'); l3.style.marginTop = '8px';
+    l3.append(elx('b', null, 'Beispiel „Belege pro Jahr": '),
+      document.createTextNode('Basis Google Drive, Pfad '), codeEl('NEVPAZ Belege/{jahr}'),
+      document.createTextNode(', „Unterordner mitscannen" an.'));
+    const l4 = elx('div'); l4.style.marginTop = '8px';
+    l4.append(document.createTextNode('🔒 Sicherheit: Der Sync-Daemon beschränkt Pfade serverseitig auf Google Drive bzw. den Cockpit-Ordner — absolute Pfade und '),
+      codeEl('..'), document.createTextNode(' werden dort verworfen; die Warnungen hier sind nur eine Vorab-Prüfung.'));
+    help.append(l0, l1, l2, l3, l4);
+  }
+
+  // --- Liste der überwachten Ordner ---
+  const listCard = elx('div','card');
+  listCard.id = 'ord-list-card';
+  listCard.style.marginTop = '22px';
+  listCard.append(elx('h3', null, 'Überwachte Ordner'),
+    elx('div','cs','Nach Sortierung — der Schalter nimmt einen Ordner in die Automatik auf oder pausiert ihn'));
+  const listBox = elx('div','ordlist');
+  listCard.append(listBox);
+
+  // --- Formular „Ordner hinzufügen / bearbeiten" ---
+  const formCard = elx('div','card');
+  formCard.id = 'ord-form-card';
+  formCard.style.marginTop = '22px';
+  const formTitle = elx('h3', null, 'Ordner hinzufügen');
+  const formSub   = elx('div','cs','Neuen Beleg-Ordner in die Überwachung aufnehmen');
+  formCard.append(formTitle, formSub);
+
+  const fGrid = elx('div','ordform');
+  function ffWrap(labelText, input, full){
+    const w = elx('label','ff' + (full ? ' full' : ''));
+    w.append(elx('span', null, labelText), input);
+    return w;
+  }
+  const inLabel = document.createElement('input');
+  inLabel.type = 'text'; inLabel.id = 'ord-f-label'; inLabel.placeholder = 'z.B. Belege 2026'; inLabel.maxLength = 120;
+  let fBasis = 'drive';
+  const segWrap = elx('div','seggrp');
+  segWrap.append(elx('span', null, 'Basis'));
+  const seg = elx('div','seg');
+  const segBtns = {};
+  [['drive','Google Drive'],['vault','Lokal (Cockpit)']].forEach(([v,t])=>{
+    const b = elx('button', v === fBasis ? 'on' : '', t);
+    b.type = 'button';
+    b.dataset.basis = v;
+    b.title = ORD_BASIS[v].hint;
+    b.addEventListener('click', ()=>{
+      if (fBasis === v) return;
+      fBasis = v;
+      Object.values(segBtns).forEach(x => x.classList.toggle('on', x === b));
+      updatePrev();
+    });
+    segBtns[v] = b;
+    seg.append(b);
+  });
+  segWrap.append(seg);
+  const inPfad = document.createElement('input');
+  inPfad.type = 'text'; inPfad.id = 'ord-f-pfad'; inPfad.classList.add('mono');
+  inPfad.placeholder = 'z.B. NEVPAZ Belege/{jahr}'; inPfad.maxLength = 300;
+  inPfad.autocomplete = 'off'; inPfad.spellcheck = false;
+  const prev = elx('div','ordprev');
+  prev.id = 'ord-f-prev';
+  function updatePrev(){
+    const rel = inPfad.value.trim();
+    const err = rel ? ordRelFehler(rel) : null;
+    if (err){
+      prev.classList.add('warn');
+      prev.textContent = '⚠️ ' + err;
+    } else {
+      prev.classList.remove('warn');
+      prev.textContent = '→ überwacht: ' + ordVollPfad(fBasis, rel) + (rel ? '' : '/…');
+    }
+  }
+  inPfad.addEventListener('input', updatePrev);
+  const selQ = document.createElement('select'); selQ.id = 'ord-f-quelle';
+  ORD_QUELLEN.forEach(([v,t])=>{ const o = document.createElement('option'); o.value = v; o.textContent = t; selQ.append(o); });
+  selQ.value = 'drive';
+  const inSort = document.createElement('input');
+  inSort.type = 'number'; inSort.step = '1'; inSort.id = 'ord-f-sort'; inSort.placeholder = 'automatisch';
+  const cbAktiv = document.createElement('input'); cbAktiv.type = 'checkbox'; cbAktiv.id = 'ord-f-aktiv'; cbAktiv.checked = true;
+  const wAktiv = elx('label','ff chk');
+  wAktiv.title = 'Nur aktive Ordner werden von der Automatik gescannt.';
+  wAktiv.append(cbAktiv, elx('span', null, 'aktiv — Automatik überwacht diesen Ordner'));
+  const cbRek = document.createElement('input'); cbRek.type = 'checkbox'; cbRek.id = 'ord-f-rek';
+  const wRek = elx('label','ff chk');
+  wRek.title = 'Auch Belege in Unterordnern des Pfads einlesen.';
+  wRek.append(cbRek, elx('span', null, 'Unterordner mitscannen (rekursiv)'));
+  const pfadWrap = elx('label','ff full');
+  pfadWrap.append(elx('span', null, 'Pfad (relativ zur Basis)'), inPfad, prev);
+  fGrid.append(ffWrap('Label', inLabel), segWrap, pfadWrap,
+    ffWrap('Quelle (für neue Belege)', selQ), ffWrap('Sortierung (optional)', inSort), wAktiv, wRek);
+  const btnSave = elx('button','btn gold sm','Ordner speichern');
+  btnSave.type = 'button'; btnSave.id = 'ord-f-save'; btnSave.style.width = 'auto';
+  const btnCancel = elx('button','btn ghost sm','Abbrechen');
+  btnCancel.type = 'button'; btnCancel.id = 'ord-f-cancel'; btnCancel.style.display = 'none';
+  const btnBar = elx('div','dactions');
+  btnBar.append(btnSave, btnCancel);
+  formCard.append(fGrid, btnBar,
+    elx('div','hintfoot','ℹ️ Pfad relativ zur Basis, ohne führenden „/" und ohne „.." — die eigentliche Pfad-Sicherheit erzwingt der Sync-Daemon serverseitig.'));
+
+  let editId = null;
+  function setFormMode(row){
+    editId = row ? row.id : null;
+    formTitle.textContent = row ? 'Ordner bearbeiten' : 'Ordner hinzufügen';
+    formSub.textContent = row
+      ? 'Änderungen an «' + String(row.label || '—') + '» — gelten ab dem nächsten Lauf'
+      : 'Neuen Beleg-Ordner in die Überwachung aufnehmen';
+    btnSave.textContent = row ? 'Änderungen speichern' : 'Ordner speichern';
+    btnCancel.style.display = row ? 'inline-flex' : 'none';
+    inLabel.value = row ? String(row.label || '') : '';
+    inPfad.value  = row ? String(row.rel_pfad || '') : '';
+    fBasis = (row && ORD_BASIS[String(row.basis)]) ? String(row.basis) : 'drive';
+    Object.entries(segBtns).forEach(([v,b]) => b.classList.toggle('on', v === fBasis));
+    selQ.value = (row && ORD_QUELLEN.some(q => q[0] === String(row.quelle))) ? String(row.quelle) : 'drive';
+    cbAktiv.checked = row ? !!row.aktiv : true;
+    cbRek.checked   = row ? !!row.rekursiv : false;
+    inSort.value = (row && row.sortierung != null) ? String(row.sortierung) : '';
+    updatePrev();
+  }
+  function nextSort(){
+    return rows.reduce((m,r) => Math.max(m, (r.sortierung == null ? 0 : +r.sortierung) || 0), 0) + 10;
+  }
+  async function doSave(){
+    const label = inLabel.value.trim();
+    const rel   = inPfad.value.trim();
+    if (!label){ toast('Bitte ein Label für den Ordner angeben.'); inLabel.focus(); return; }
+    if (!rel){ toast('Bitte einen Pfad angeben (relativ zur Basis).'); inPfad.focus(); return; }
+    const relErr = ordRelFehler(rel);
+    if (relErr){ toast(relErr); inPfad.focus(); return; }
+    let sort = parseInt(inSort.value, 10);
+    if (isNaN(sort)){
+      const cur = editId != null ? rows.find(r => String(r.id) === String(editId)) : null;
+      sort = (cur && cur.sortierung != null && !isNaN(+cur.sortierung)) ? +cur.sortierung : nextSort();
+    }
+    const patch = { label, basis: fBasis, rel_pfad: rel, quelle: selQ.value,
+                    aktiv: cbAktiv.checked, rekursiv: cbRek.checked, sortierung: sort };
+    btnSave.disabled = btnCancel.disabled = true;
+    try{
+      await saveSyncOrdner(patch, editId);
+      toast(editId != null
+        ? 'Ordner «' + label + '» aktualisiert — gilt ab dem nächsten Lauf.'
+        : 'Ordner «' + label + '» hinzugefügt — die Automatik überwacht ihn ab dem nächsten Lauf.', true);
+      loadORD(); // Liste + Formular frisch aufbauen
+    }catch(e){
+      btnSave.disabled = btnCancel.disabled = false;
+      toast('Speichern fehlgeschlagen: ' + friendly(e));
+    }
+  }
+  btnSave.addEventListener('click', doSave);
+  btnCancel.addEventListener('click', ()=>setFormMode(null));
+
+  // --- Ordner-Karte (Label · Basis-Badge · Pfad · aufgelöste Vorschau · Meta · Aktionen) ---
+  function ordCard(r){
+    const card = elx('div','ordcard' + (r.aktiv ? '' : ' inaktiv'));
+    const info = elx('div','oinfo');
+    const line = elx('div','olabel');
+    line.append(elx('span', null, String(r.label || '—')));
+    const bInfo = ORD_BASIS[String(r.basis)] || null;
+    const bb = elx('span','badge ' + (bInfo ? bInfo.badge : 'b-gry'), bInfo ? bInfo.label : String(r.basis || '—'));
+    bb.title = bInfo ? bInfo.hint : 'Unbekannte Basis — der Daemon ignoriert diesen Ordner.';
+    line.append(bb);
+    if (!r.aktiv) line.append(elx('span','badge b-gry','pausiert'));
+    info.append(line);
+    info.append(elx('div','opfad', String(r.rel_pfad || '—')));
+    const pl = elx('div','oprev');
+    pl.append(document.createTextNode('→ überwacht: '), elx('b', null, ordVollPfad(r.basis, r.rel_pfad)));
+    info.append(pl);
+    const meta = elx('div','ometa');
+    const qb = elx('span','badge b-gry','Quelle: ' + ordQuelleLabel(r.quelle));
+    qb.title = 'Neue Belege aus diesem Ordner bekommen diese Quelle zugewiesen.';
+    meta.append(qb);
+    const rk = elx('span','badge ' + (r.rekursiv ? 'b-grn' : 'b-gry'), r.rekursiv ? '✓ inkl. Unterordner' : 'ohne Unterordner');
+    rk.title = r.rekursiv ? 'Unterordner werden mitgescannt.' : 'Nur der Ordner selbst wird gescannt.';
+    meta.append(rk);
+    if (r.sortierung != null && r.sortierung !== '') meta.append(elx('span','badge b-gry','Sortierung ' + F(+r.sortierung || 0)));
+    if (r.aktualisiert_am){
+      const d = deTime(r.aktualisiert_am);
+      if (d) meta.append(elx('span','badge b-gry','geändert ' + d));
+    }
+    info.append(meta);
+    card.append(info);
+
+    const acts = elx('div','oacts');
+    const sw = elx('label','switch');
+    sw.title = r.aktiv ? 'Aktiv — Klick pausiert die Überwachung dieses Ordners.' : 'Pausiert — Klick nimmt den Ordner wieder in die Überwachung auf.';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!r.aktiv;
+    cb.dataset.ordid = String(r.id);
+    cb.setAttribute('aria-label', 'Ordner „' + String(r.label || '') + '" aktiv');
+    cb.addEventListener('change', async ()=>{
+      const val = cb.checked;
+      cb.disabled = true;
+      try{
+        await saveSyncOrdner({ aktiv: val }, r.id);
+        toast('«' + String(r.label || '—') + '» ist jetzt ' + (val ? 'aktiv — wird ab dem nächsten Lauf überwacht.' : 'pausiert — wird nicht mehr gescannt.'), true);
+        loadORD();
+      }catch(e){
+        cb.checked = !val;
+        cb.disabled = false;
+        toast('Umschalten fehlgeschlagen: ' + friendly(e));
+      }
+    });
+    sw.append(cb, elx('span','sl'));
+    acts.append(sw);
+    const btns = elx('div','obtns');
+    const be = elx('button','btn ghost sm','Bearbeiten');
+    be.type = 'button';
+    be.dataset.ordedit = String(r.id);
+    be.addEventListener('click', ()=>{
+      setFormMode(r);
+      try{ formCard.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(_e){}
+      inLabel.focus();
+    });
+    const bd = elx('button','btn ghost sm dngr','Löschen');
+    bd.type = 'button';
+    bd.dataset.orddel = String(r.id);
+    let armed = null; // zweistufig statt confirm(): erst scharf stellen, dann löschen
+    bd.addEventListener('click', async ()=>{
+      if (armed == null){
+        bd.textContent = 'Wirklich löschen?';
+        armed = setTimeout(()=>{ armed = null; bd.textContent = 'Löschen'; }, 4000);
+        return;
+      }
+      clearTimeout(armed); armed = null;
+      bd.disabled = true;
+      try{
+        const ok = await deleteSyncOrdner(r.id);
+        if (!ok) throw new Error('Der Ordner wurde serverseitig nicht entfernt (fehlende Berechtigung).');
+        toast('Ordner «' + String(r.label || '—') + '» gelöscht — die Automatik überwacht ihn nicht mehr.', true);
+        loadORD();
+      }catch(e){
+        bd.disabled = false;
+        bd.textContent = 'Löschen';
+        toast('Löschen fehlgeschlagen: ' + friendly(e));
+      }
+    });
+    btns.append(be, bd);
+    acts.append(btns);
+    card.append(acts);
+    return card;
+  }
+
+  if (!rows.length){
+    listBox.append(elx('div','empty','Noch keine Ordner — füge unten deinen ersten Sync-Ordner hinzu.'));
+  } else {
+    rows.forEach(r => listBox.append(ordCard(r)));
+  }
+  setFormMode(null);
+  body.append(help, listCard, formCard);
 }
 
 // ---------------- Tab „Prognose & Steuern" (Supabase fin_prognose, RLS aal2) ----------------
@@ -2520,6 +2920,15 @@ const MOCK_REGELN = [
   { haendler_key:'clinicos.ai gmbh', haendler_anzeige:'clinicos.ai GmbH', kategorie_id:'software',
     treffer:4, quelle:'drive_sync', erstellt_am:'2026-04-02T07:55:00+02:00', aktualisiert_am:'2026-06-24T06:45:00+02:00' }
 ];
+// Beispiel-Sync-Ordner (fin_sync_ordner) — überwachte Beleg-Ordner der Automatik
+const MOCK_SYNC_ORDNER = [
+  { id:'ORD-BSP-1', label:'Eingang (Standard)', basis:'drive', rel_pfad:'NEVPAZ Belege/Eingang', quelle:'drive',
+    aktiv:true, rekursiv:false, sortierung:10, aktualisiert_am:'2026-06-14T09:20:00+02:00' },
+  { id:'ORD-BSP-2', label:'Belege {jahr}', basis:'drive', rel_pfad:'NEVPAZ Belege/{jahr}', quelle:'drive',
+    aktiv:true, rekursiv:true, sortierung:20, aktualisiert_am:'2026-07-01T08:05:00+02:00' },
+  { id:'ORD-BSP-3', label:'Lokaler Scan-Ordner', basis:'vault', rel_pfad:'scan_eingang', quelle:'scan',
+    aktiv:false, rekursiv:false, sortierung:30, aktualisiert_am:'2026-05-20T17:40:00+02:00' }
+];
 // Beispiel-Sync-Protokoll (fin_sync_log) — nur die drive_sync-Zeilen speisen das Statuspanel
 const MOCK_SYNC_LOG = [
   { id:412, ts:'2026-07-02T14:30:00+02:00', source:'drive_sync', status:'ok', rows:3,
@@ -2532,6 +2941,7 @@ const MOCKDB = {
   fin_kategorie: MOCK_KATS,
   fin_prognose: MOCK_PROGNOSE,
   fin_haendler_regel: MOCK_REGELN,
+  fin_sync_ordner: MOCK_SYNC_ORDNER,
   fin_sync_log: MOCK_SYNC_LOG,
   fin_umsatz_tag: mockTage(),
   fin_pas_kpi: [
