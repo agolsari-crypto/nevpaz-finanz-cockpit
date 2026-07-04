@@ -146,8 +146,43 @@ details pre{background:rgba(19,32,56,.05);padding:10px;border-radius:8px;font-si
 .empty{padding:28px;text-align:center;color:var(--ink2);font-style:italic;font-size:13px}
 .sumline{display:none;gap:20px;flex-wrap:wrap;margin-top:12px;padding:12px 16px;border-radius:12px;background:rgba(19,32,56,.045);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600}
 .sumline .pos{color:var(--grn)}.sumline .neg{color:var(--red)}
-.toast{position:fixed;right:18px;bottom:18px;background:var(--red);color:#fff;padding:12px 18px;border-radius:12px;box-shadow:var(--sh2);font-size:13px;z-index:99;max-width:420px;animation:rise .3s}
+/* Toast-Stapel: Container unten rechts — Toasts stapeln vertikal, max. 3 sichtbar */
+#toastwrap{position:fixed;right:18px;bottom:18px;z-index:99;display:flex;flex-direction:column;align-items:flex-end;gap:10px;max-width:min(430px,calc(100vw - 24px));pointer-events:none}
+.toast{background:var(--red);color:#fff;padding:12px 18px;border-radius:12px;box-shadow:var(--sh2);font-size:13px;max-width:100%;pointer-events:auto;cursor:pointer;transition:opacity .28s ease,transform .28s ease;animation:rise .3s}
 .toast.ok{background:linear-gradient(135deg,#48A57C,#2F7D5B)}
+.toast.out{opacity:0;transform:translateY(10px)}
+/* Tab-Kopf mit dezentem „Aktualisieren" */
+.ttrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.refbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#FFFDF7;color:var(--ink2);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;transition:.18s;flex-shrink:0}
+.refbtn:hover{border-color:var(--gold);color:var(--goldd);box-shadow:0 0 0 3px rgba(198,161,91,.14)}
+.refbtn:disabled{opacity:.55;cursor:default;box-shadow:none}
+.refbtn .ric{font-size:13px;line-height:1;display:inline-block}
+.refbtn.busy .ric{animation:rot .8s linear infinite}
+/* Ladeskelette (Creme/Navy mit dezentem Gold-Schimmer) */
+.skwrap{display:flex;flex-direction:column;gap:22px}
+.skhead{display:flex;align-items:center;gap:11px;color:var(--ink2);font-size:12.5px;padding:2px 2px 0}
+.sk{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg,var(--creme2),var(--card));box-shadow:var(--sh)}
+.sk:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--goldgrad);opacity:.35}
+.sk:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(100deg,transparent 32%,rgba(198,161,91,.13) 50%,transparent 68%);animation:skshine 1.5s ease-in-out infinite}
+@keyframes skshine{to{transform:translateX(100%)}}
+.skpad{padding:20px 22px;display:flex;flex-direction:column;gap:11px}
+.skb{height:11px;border-radius:6px;background:rgba(19,32,56,.09)}
+.skb.h18{height:19px;background:rgba(19,32,56,.13)}
+.skcols{display:flex;align-items:flex-end;gap:12px;height:168px;padding-top:6px}
+.skcol{flex:1;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,rgba(19,32,56,.15),rgba(19,32,56,.06))}
+.skrow{display:grid;grid-template-columns:2.2fr 1fr 1fr .8fr;gap:14px}
+.sklist{display:flex;flex-direction:column;gap:12px}
+@media (prefers-reduced-motion:reduce){.sk:after{animation:none}}
+/* Bulk-Auswahl (Ausgaben & Belege) */
+.bulkbar{display:none;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 12px;padding:11px 15px;border-radius:13px;border:1px solid rgba(198,161,91,.6);background:linear-gradient(100deg,rgba(198,161,91,.17),rgba(198,161,91,.05));box-shadow:var(--sh);animation:rise .25s}
+.bulkbar.on{display:flex}
+.bulkbar .bcount{font-weight:700;color:var(--navy);font-size:13px;white-space:nowrap}
+.bulkbar .bsum{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px;color:var(--goldd);white-space:nowrap}
+.bulkbar .bsep{flex:1}
+th.selc,td.selc{width:34px;text-align:center;padding-right:2px}
+input.rowsel,#aus-selall{accent-color:var(--goldd);width:15px;height:15px;cursor:pointer;margin:0;vertical-align:middle}
+tr.sel td{background:rgba(198,161,91,.10)}
+@media(max-width:560px){#toastwrap{left:12px;right:12px;bottom:12px;align-items:stretch}}
 /* ---------- Ausgaben & Belege ---------- */
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;cursor:help;white-space:nowrap}
 .b-grn{background:rgba(47,125,91,.13);color:var(--grn);border:1px solid rgba(47,125,91,.35)}
@@ -409,42 +444,42 @@ pre.raw{background:rgba(19,32,56,.05);padding:14px;border-radius:10px;font-size:
     </div>
     <div class="wrap">
       <section class="tab on" id="t-ov">
-        <h2 class="tt">Übersicht</h2>
+        <div class="ttrow"><h2 class="tt">Übersicht</h2><button class="refbtn" data-ref="ov" type="button" title="Neu laden — der Zwischenspeicher (60 s) wird geleert"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Aggregate direkt aus Supabase — pseudonymisiert, ohne Patientendaten</div>
         <div class="tabbody" id="body-ov"></div>
       </section>
       <section class="tab" id="t-aus">
-        <h2 class="tt">Ausgaben &amp; Belege</h2>
+        <div class="ttrow"><h2 class="tt">Ausgaben &amp; Belege</h2><button class="refbtn" data-ref="aus" type="button" title="Neu laden — der Zwischenspeicher (60 s) wird geleert"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Belege aus dem Ausgaben-Postfach — KI-kategorisiert · Korrekturen fließen direkt nach Supabase (aal2)</div>
         <div class="tabbody" id="body-aus"></div>
       </section>
       <section class="tab" id="t-ord">
-        <h2 class="tt">Sync-Ordner</h2>
+        <div class="ttrow"><h2 class="tt">Sync-Ordner</h2><button class="refbtn" data-ref="ord" type="button" title="Neu laden — der Zwischenspeicher (60 s) wird geleert"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Welche Beleg-Ordner die Automatik überwacht — Google Drive („Meine Ablage“) oder lokaler Cockpit-Ordner, mit Datums-Platzhaltern · Änderungen wirken ab dem nächsten Lauf (4×/täglich)</div>
         <div class="tabbody" id="body-ord"></div>
       </section>
       <section class="tab" id="t-prog">
-        <h2 class="tt">Prognose &amp; Steuern</h2>
+        <div class="ttrow"><h2 class="tt">Prognose &amp; Steuern</h2><button class="refbtn" data-ref="prog" type="button" title="Neu laden — der Zwischenspeicher (60 s) wird geleert"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Jahres-Hochrechnung je Entität und Szenario — Gewinn, geschätzte Steuerlast und empfohlene Rücklage · Supabase (aal2), pseudonymisiert</div>
         <div class="tabbody" id="body-prog"></div>
       </section>
       <section class="tab" id="t-pat">
-        <h2 class="tt">Patientensuche</h2>
+        <div class="ttrow"><h2 class="tt">Patientensuche</h2><button class="refbtn" data-ref="pat" type="button" title="Zurücksetzen &amp; live neu (PHI wird nie zwischengespeichert)"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Live-Suche im PAS (Name oder Aktenzeichen) — Ergebnisse werden nur angezeigt, nie gespeichert</div>
         <div class="tabbody" id="body-pat"></div>
       </section>
       <section class="tab" id="t-re">
-        <h2 class="tt">Rechnungsausgang</h2>
+        <div class="ttrow"><h2 class="tt">Rechnungsausgang</h2><button class="refbtn" data-ref="re" type="button" title="Live neu laden (PHI wird nie zwischengespeichert)"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Rechnungen live aus PAS · Filter wirken clientseitig auf die geladenen Zeilen</div>
         <div class="tabbody" id="body-re"></div>
       </section>
       <section class="tab" id="t-za">
-        <h2 class="tt">Zahlungen &amp; Konto</h2>
+        <div class="ttrow"><h2 class="tt">Zahlungen &amp; Konto</h2><button class="refbtn" data-ref="za" type="button" title="Live neu laden (PHI wird nie zwischengespeichert)"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Buchungen (Kontobewegungen) live aus PAS</div>
         <div class="tabbody" id="body-za"></div>
       </section>
       <section class="tab" id="t-mahn">
-        <h2 class="tt">Mahnjournal</h2>
+        <div class="ttrow"><h2 class="tt">Mahnjournal</h2><button class="refbtn" data-ref="mahn" type="button" title="Live neu laden (PHI wird nie zwischengespeichert)"><span class="ric">↻</span>Aktualisieren</button></div>
         <div class="ts">Offene Posten je Mahnstufe — live aus PAS, mit Beträgen und Fallzahlen</div>
         <div class="tabbody" id="body-mahn"></div>
       </section>
@@ -531,6 +566,9 @@ function deNum(s){
   return null;
 }
 function deb(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+function onEnter(input, fn){ // Enter in Filter-Textfeldern → Filter sofort anwenden (ohne Debounce-Wartezeit)
+  input.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ ev.preventDefault(); fn(); } });
+}
 
 // ---------------- Screens & Fehlertexte ----------------
 function showScreen(id){
@@ -558,10 +596,30 @@ function friendly(e){
   if (/failed to fetch|networkerror|network|load failed/i.test(m)) return 'Netzwerkfehler — bitte Internetverbindung prüfen und erneut versuchen.';
   return m || 'Unbekannter Fehler — bitte erneut versuchen.';
 }
+/* Toast-Stapel: Toasts landen in einem Container und stapeln sich vertikal —
+   max. 3 gleichzeitig sichtbar (ältester weicht), Auto-Dismiss gestaffelt,
+   Klick blendet sofort aus. Aufruf-Signatur unverändert: toast(msg, ok). */
+let toastWrap = null;
 function toast(msg, ok){
+  if (!toastWrap || !toastWrap.isConnected){
+    toastWrap = elx('div');
+    toastWrap.id = 'toastwrap';
+    document.body.append(toastWrap);
+  }
   const t = elx('div','toast' + (ok ? ' ok' : ''), msg);
-  document.body.append(t);
-  setTimeout(()=>t.remove(), 5200);
+  t.title = 'Klicken zum Ausblenden';
+  let gone = false;
+  t._dismiss = function(){
+    if (gone) return;
+    gone = true;
+    t.classList.add('out');
+    setTimeout(()=>t.remove(), 300);
+  };
+  t.addEventListener('click', t._dismiss);
+  toastWrap.append(t);
+  const vis = Array.from(toastWrap.children).filter(x => !x.classList.contains('out'));
+  if (vis.length > 3 && vis[0]._dismiss) vis[0]._dismiss();          // ältester rückt raus
+  setTimeout(t._dismiss, 5200 + Math.min(3, vis.length - 1) * 400);  // gestaffelt bei Schüben
 }
 
 // ---------------- Ladezustände / Fehlerboxen ----------------
@@ -596,6 +654,81 @@ function rawBox(container, raw){
   pre.textContent = t.length > 4000 ? t.slice(0,4000)+' …' : t;
   card.append(pre);
   container.append(card);
+}
+
+/* ---- Ladeskelette: dezente Platzhalter im Creme/Navy-Stil (gefühlte Performance).
+   Ergänzen den Spinner (kleine Kopfzeile), Fehlerbox/Retry bleiben unverändert. ---- */
+function skBar(w, big){
+  const b = elx('div','skb' + (big ? ' h18' : ''));
+  b.style.width = w;
+  return b;
+}
+function skKpi(){
+  const c = elx('div','sk');
+  const p = elx('div','skpad');
+  p.append(skBar('42%'), skBar('68%', true), skBar('55%'));
+  c.append(p);
+  return c;
+}
+function skChart(){
+  const c = elx('div','sk');
+  const p = elx('div','skpad');
+  p.append(skBar('34%', true), skBar('52%'));
+  const cols = elx('div','skcols');
+  [42,64,50,78,58,88,47,70,61,80].forEach(h => {
+    const col = elx('div','skcol');
+    col.style.height = h + '%';
+    cols.append(col);
+  });
+  p.append(cols);
+  c.append(p);
+  return c;
+}
+function skTable(n){
+  const c = elx('div','sk');
+  const p = elx('div','skpad');
+  p.append(skBar('30%', true));
+  for (let i = 0; i < n; i++){
+    const r = elx('div','skrow');
+    r.append(skBar((64 + (i * 13) % 32) + '%'), skBar('72%'), skBar('58%'), skBar('80%'));
+    p.append(r);
+  }
+  c.append(p);
+  return c;
+}
+function skCard(){
+  const c = elx('div','sk');
+  const p = elx('div','skpad');
+  p.append(skBar('26%', true), skBar('58%'), skBar('40%'));
+  c.append(p);
+  return c;
+}
+function skeleton(container, opts, text){
+  opts = opts || {};
+  container.textContent = '';
+  const w = elx('div','skwrap');
+  const head = elx('div','skhead');
+  head.append(elx('div','spinner'), elx('span', null, text || 'Wird geladen …'));
+  w.append(head);
+  if (opts.kpis){
+    const g = elx('div','grid g4');
+    for (let i = 0; i < opts.kpis; i++) g.append(skKpi());
+    w.append(g);
+  }
+  if (opts.charts === 1){
+    w.append(skChart());
+  } else if (opts.charts){
+    const g = elx('div','grid g2');
+    for (let i = 0; i < opts.charts; i++) g.append(skChart());
+    w.append(g);
+  }
+  if (opts.cards){
+    const l = elx('div','sklist');
+    for (let i = 0; i < opts.cards; i++) l.append(skCard());
+    w.append(l);
+  }
+  if (opts.rows) w.append(skTable(opts.rows));
+  container.append(w);
 }
 
 // ---------------- Chart-Setup (NEO-Balken, Wert-Labels) ----------------
@@ -806,6 +939,7 @@ async function doLogout(){
   // PHI-Hygiene: angezeigte Daten und Diagramme aus dem DOM entfernen
   Object.keys(CHARTS).forEach(k => { try{ CHARTS[k].destroy(); }catch(_e){} delete CHARTS[k]; });
   $$('.tabbody').forEach(b => { b.textContent = ''; });
+  CACHE.clear(); // Aggregat-Cache beim Abmelden vollständig leeren
   loaded = {};
   setErr('login','');
   showScreen('login');
@@ -837,6 +971,16 @@ async function enterApp(){
     appWired = true;
     $$('#nav a').forEach(a => a.addEventListener('click', ()=>activateTab(a.dataset.t)));
     $('#btn-logout').addEventListener('click', doLogout);
+    // „Aktualisieren" je Tab: Cache-Einträge des Tabs verwerfen und neu laden (PHI: immer live)
+    $$('.refbtn').forEach(b => b.addEventListener('click', ()=>{
+      const t = b.dataset.ref;
+      if (!t || !LOADERS[t] || b.disabled) return;
+      cacheDrop.apply(null, TAB_TABLES[t] || []);
+      loaded[t] = true;
+      b.disabled = true;
+      b.classList.add('busy');
+      Promise.resolve(LOADERS[t]()).catch(()=>{}).finally(()=>{ b.disabled = false; b.classList.remove('busy'); });
+    }));
   }
   loaded = {};
   showScreen('app');
@@ -848,20 +992,74 @@ function activateTab(t){
   if (!loaded[t]){ loaded[t] = true; LOADERS[t](); }
 }
 
+/* ---------------- Tastatur (dezent): Escape schließt · „/" fokussiert Suche ----------------
+   Nur aktiv, wenn die App-Shell sichtbar ist — Login/2FA bleiben unberührt.
+   Escape: offenes Detail-Panel → Bulk-Auswahl → Ordner-Formular (Bearbeiten-Modus) → Feld-Blur.
+   „/": fokussiert das Freitext-Suchfeld des aktiven Tabs (nicht beim Tippen in Feldern). */
+document.addEventListener('keydown', ev => {
+  const app = document.getElementById('scr-app');
+  if (!app || !app.classList.contains('on')) return;
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  const t = ev.target;
+  const typing = !!(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable));
+  if (ev.key === 'Escape'){
+    if (typing && t.tagName === 'SELECT'){ t.blur(); return; } // Dropdown nur schließen, nichts anderes auslösen
+    const tab = document.querySelector('.tab.on');
+    if (!tab) return;
+    const x = tab.querySelector('.detail .xbtn');                 // 1) offenes Detail-Panel schließen
+    if (x){ x.click(); return; }
+    const bc = tab.querySelector('.bulkbar.on #aus-bulk-clear');  // 2) aktive Bulk-Auswahl aufheben
+    if (bc){ bc.click(); return; }
+    const oc = tab.querySelector('#ord-f-cancel');                // 3) Ordner-Formular: Bearbeiten abbrechen
+    if (oc && oc.style.display !== 'none' && !oc.disabled){ oc.click(); return; }
+    if (typing && t.blur) t.blur();                               // 4) sonst: Feld-Fokus lösen
+    return;
+  }
+  if (ev.key === '/' && !typing){
+    const s = document.querySelector('.tab.on input[type=search]');
+    if (s){ ev.preventDefault(); s.focus(); try{ s.select(); }catch(_e){} }
+  }
+});
+
 // ---------------- Supabase-Aggregate (Tab „Übersicht") ----------------
+/* ---- Client-Cache (TTL 60 s) — NUR Supabase-Aggregate, NIEMALS PHI ----
+   Beschleunigt Tab-Wechsel und geteilte Reads (fin_beleg/fin_pas_kpi nutzen
+   mehrere Tabs). Mutationen (Beleg, Regel, Ordner) und der „Aktualisieren"-
+   Button je Tab verwerfen die betroffenen Einträge (cacheDrop).
+   PHI-Views laufen über pasCall → bewusst ohne jede Cache-Schicht. */
+const CACHE_TTL = 60000;
+const CACHE = new Map(); // Tabelle → { ts, rows }
+function cacheDrop(){ for (const t of arguments) CACHE.delete(t); }
+const TAB_TABLES = {
+  ov:  ['fin_pas_kpi','fin_umsatz_tag'],
+  aus: ['fin_beleg','fin_kategorie','fin_haendler_regel','fin_sync_log'],
+  ord: ['fin_sync_ordner'],
+  prog:['fin_prognose','fin_beleg','fin_pas_kpi'],
+  pat: [], re: [], za: [], mahn: [] // PHI — nie im Cache, „Aktualisieren" lädt immer live
+};
+const mockDelay = () => new Promise(r => setTimeout(r, 650)); // Vorschau: kurze simulierte Ladezeit (macht Skeletons prüfbar)
 async function fetchTable(t){
-  if (MOCK) return JSON.parse(JSON.stringify(MOCKDB[t] || [])); // Vorschau: nur Beispieldaten
-  sb = await getSb();
-  let q = sb.from(t).select('*').limit(4000);
-  if (t === 'fin_pas_kpi')    q = sb.from(t).select('*').order('stichtag',    {ascending:false}).limit(4000);
-  if (t === 'fin_umsatz_tag') q = sb.from(t).select('*').order('datum',       {ascending:false}).limit(4000);
-  if (t === 'fin_beleg')      q = sb.from(t).select('*').order('beleg_datum', {ascending:false}).limit(4000);
-  if (t === 'fin_kategorie')  q = sb.from(t).select('*').order('sort');
-  if (t === 'fin_haendler_regel') q = sb.from(t).select('*').order('aktualisiert_am', {ascending:false}).limit(2000);
-  if (t === 'fin_sync_ordner')    q = sb.from(t).select('*').order('sortierung', {ascending:true}).order('label', {ascending:true}).limit(500);
-  const { data, error } = await q;
-  if (error) throw error;
-  return data || [];
+  const hit = CACHE.get(t);
+  if (hit && (Date.now() - hit.ts) < CACHE_TTL) return hit.rows;
+  let rows;
+  if (MOCK){
+    await mockDelay(); // Vorschau: nur Beispieldaten, kein Supabase-Call
+    rows = JSON.parse(JSON.stringify(MOCKDB[t] || []));
+  } else {
+    sb = await getSb();
+    let q = sb.from(t).select('*').limit(4000);
+    if (t === 'fin_pas_kpi')    q = sb.from(t).select('*').order('stichtag',    {ascending:false}).limit(4000);
+    if (t === 'fin_umsatz_tag') q = sb.from(t).select('*').order('datum',       {ascending:false}).limit(4000);
+    if (t === 'fin_beleg')      q = sb.from(t).select('*').order('beleg_datum', {ascending:false}).limit(4000);
+    if (t === 'fin_kategorie')  q = sb.from(t).select('*').order('sort');
+    if (t === 'fin_haendler_regel') q = sb.from(t).select('*').order('aktualisiert_am', {ascending:false}).limit(2000);
+    if (t === 'fin_sync_ordner')    q = sb.from(t).select('*').order('sortierung', {ascending:true}).order('label', {ascending:true}).limit(500);
+    const { data, error } = await q;
+    if (error) throw error;
+    rows = data || [];
+  }
+  CACHE.set(t, { ts: Date.now(), rows });
+  return rows;
 }
 function sortMonths(rows, stichtag){
   const M = {jan:1,feb:2,'mär':3,mrz:3,mae:3,apr:4,mai:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dez:12};
@@ -877,7 +1075,7 @@ function sortMonths(rows, stichtag){
 }
 async function loadOV(){
   const body = $('#body-ov');
-  spin(body, 'Aggregate werden aus Supabase geladen …');
+  skeleton(body, { kpis:4, charts:2 }, 'Aggregate werden aus Supabase geladen …');
   try{
     const [kpi, tage] = await Promise.all([fetchTable('fin_pas_kpi'), fetchTable('fin_umsatz_tag')]);
     renderOV(body, kpi, tage);
@@ -977,7 +1175,7 @@ const KAT_FARBEN  = [C.gold, C.navy2, C.grn2, C.reds, C.gold2, C.navy, C.grn, C.
 
 async function loadAUS(){
   const body = $('#body-aus');
-  spin(body, 'Belege werden aus Supabase geladen …');
+  skeleton(body, { kpis:4, charts:2, rows:6 }, 'Belege werden aus Supabase geladen …');
   try{
     // Regeln + Sync-Protokoll sind optional — der Tab darf daran nie scheitern.
     const [belege, kats, regeln, syncLog] = await Promise.all([
@@ -1000,15 +1198,21 @@ function deTime(ts){
 }
 // Letzter Drive-Sync-Lauf: neueste fin_sync_log-Zeile mit source=drive_sync (Zeitfeld: ts)
 async function fetchSyncLog(){
+  const hit = CACHE.get('fin_sync_log');
+  if (hit && (Date.now() - hit.ts) < CACHE_TTL) return hit.rows;
+  let row;
   if (MOCK){ // Vorschau-Guard: nur MOCKDB, kein Supabase-Call
     const rows = (MOCKDB.fin_sync_log || []).filter(r => String(r.source) === 'drive_sync');
     rows.sort((a,b) => String(b.ts || '').localeCompare(String(a.ts || '')));
-    return rows[0] || null;
+    row = rows[0] || null;
+  } else {
+    sb = await getSb();
+    const { data, error } = await sb.from('fin_sync_log').select('*').eq('source','drive_sync').order('ts', {ascending:false}).limit(1);
+    if (error) throw error;
+    row = (data && data[0]) || null;
   }
-  sb = await getSb();
-  const { data, error } = await sb.from('fin_sync_log').select('*').eq('source','drive_sync').order('ts', {ascending:false}).limit(1);
-  if (error) throw error;
-  return (data && data[0]) || null;
+  CACHE.set('fin_sync_log', { ts: Date.now(), rows: row });
+  return row;
 }
 /* ---- Händler-Regeln (fin_haendler_regel): lernende Kategorisierung ----
    WICHTIG: haendler_key = haendler.trim().toLowerCase() — der Drive-Sync liest
@@ -1023,6 +1227,7 @@ async function saveHaendlerRegel(haendler, kategorieId){
     aktualisiert_am: new Date().toISOString()
   };
   if (MOCK){ // Vorschau-Guard: Upsert nur lokal in MOCKDB, kein Supabase-Schreiben
+    cacheDrop('fin_haendler_regel');
     const arr = MOCKDB.fin_haendler_regel;
     const i = arr.findIndex(r => String(r.haendler_key) === row.haendler_key);
     if (i >= 0){ arr[i] = Object.assign({}, arr[i], row); return Object.assign({}, arr[i]); }
@@ -1032,10 +1237,12 @@ async function saveHaendlerRegel(haendler, kategorieId){
   sb = await getSb();
   const { data, error } = await sb.from('fin_haendler_regel').upsert(row, { onConflict:'haendler_key' }).select();
   if (error) throw error;
+  cacheDrop('fin_haendler_regel');
   return (data && data[0]) || row;
 }
 async function deleteHaendlerRegel(key){
   if (MOCK){ // Vorschau-Guard: Delete nur lokal in MOCKDB
+    cacheDrop('fin_haendler_regel');
     const arr = MOCKDB.fin_haendler_regel;
     const i = arr.findIndex(r => String(r.haendler_key) === String(key));
     if (i >= 0) arr.splice(i, 1);
@@ -1044,6 +1251,7 @@ async function deleteHaendlerRegel(key){
   sb = await getSb();
   const { data, error } = await sb.from('fin_haendler_regel').delete().eq('haendler_key', key).select();
   if (error) throw error;
+  cacheDrop('fin_haendler_regel');
   return !!(data && data.length); // leer = RLS hat die Löschung nicht freigegeben
 }
 function belegNum(v){
@@ -1081,13 +1289,21 @@ async function openBeleg(pfad){
 }
 // Kategorie/Status korrigieren (RLS erlaubt UPDATE nur für aal2)
 async function saveBeleg(b, patch){
-  if (MOCK){ Object.assign(b, patch); toast('Vorschau: Änderung nur lokal übernommen (kein Supabase-Schreiben).', true); return; } // Vorschau-Guard
+  if (MOCK){ // Vorschau-Guard: nur lokal (auch in MOCKDB, damit „Aktualisieren" die Änderung behält)
+    const src = (MOCKDB.fin_beleg || []).find(r => String(r.id) === String(b.id));
+    if (src) Object.assign(src, patch);
+    Object.assign(b, patch);
+    cacheDrop('fin_beleg');
+    toast('Vorschau: Änderung nur lokal übernommen (kein Supabase-Schreiben).', true);
+    return;
+  }
   sb = await getSb();
   const { error } = await sb.from('fin_beleg')
     .update({ kategorie_id: patch.kategorie_id, status: patch.status })
     .eq('id', b.id);
   if (error) throw error;
   Object.assign(b, patch);
+  cacheDrop('fin_beleg');
   toast('Beleg aktualisiert — Kategorie/Status gespeichert.', true);
 }
 function renderAUS(body, belege, kats, regeln, syncLog){
@@ -1099,6 +1315,11 @@ function renderAUS(body, belege, kats, regeln, syncLog){
   function syncRegelMap(){ regelMap.clear(); regeln.forEach(r => regelMap.set(String(r.haendler_key || ''), r)); }
   syncRegelMap();
   let regelOffer = null; // nach Kategorie-Korrektur: {id, kategorie_id} → „🧠 Regel merken" anbieten
+  // --- Bulk-Auswahl: Checkboxen je Zeile + „alle auswählen" im Tabellenkopf ---
+  const byId = new Map(belege.map(x => [String(x.id), x]));
+  const selIds = new Set();
+  let curShown = [];   // aktuell angezeigte (gefilterte, gekappte) Belege
+  let selAllCb = null; // „alle auswählen"-Checkbox im Tabellenkopf
 
   // --- Drive-Sync-Statuspanel (fin_sync_log, source=drive_sync) ---
   const syncStrip = elx('div','notecard syncstrip');
@@ -1131,6 +1352,7 @@ function renderAUS(body, belege, kats, regeln, syncLog){
   const iq = document.createElement('input');
   iq.type = 'search'; iq.placeholder = 'Händler oder Beschreibung …';
   iq.addEventListener('input', deb(()=>{ st.q = iq.value.trim().toLowerCase(); rerender(); }, 200));
+  onEnter(iq, ()=>{ st.q = iq.value.trim().toLowerCase(); rerender(); });
   const iv = document.createElement('input'); iv.type = 'date';
   iv.addEventListener('change', ()=>{ st.von = iv.value; rerender(); });
   const ib = document.createElement('input'); ib.type = 'date';
@@ -1167,8 +1389,10 @@ function renderAUS(body, belege, kats, regeln, syncLog){
   }
   const ibv = numIn('f-aus-bvon','0,00');
   ibv.addEventListener('input', deb(()=>{ const n = parseFloat(ibv.value); st.bvon = isNaN(n) ? null : n; rerender(); }, 250));
+  onEnter(ibv, ()=>{ const n = parseFloat(ibv.value); st.bvon = isNaN(n) ? null : n; rerender(); });
   const ibb = numIn('f-aus-bbis','∞');
   ibb.addEventListener('input', deb(()=>{ const n = parseFloat(ibb.value); st.bbis = isNaN(n) ? null : n; rerender(); }, 250));
+  onEnter(ibb, ()=>{ const n = parseFloat(ibb.value); st.bbis = isNaN(n) ? null : n; rerender(); });
   const cp = document.createElement('input'); cp.type = 'checkbox'; cp.id = 'f-aus-pruefen';
   cp.addEventListener('change', ()=>{ st.pruefen = cp.checked; rerender(); });
   const cpw = elx('label','ff chk');
@@ -1207,6 +1431,95 @@ function renderAUS(body, belege, kats, regeln, syncLog){
   const out  = elx('div');
   const sums = elx('div','sumline');
   const hint = elx('div','hintfoot','ℹ️ Kategorien sind KI-Vorschläge — vor DATEV-Export prüfen.');
+
+  // --- Bulk-Leiste: erscheint nur bei Auswahl — Sammel-Update mehrerer Belege ---
+  const bulk = elx('div','bulkbar');
+  bulk.id = 'aus-bulk';
+  const bCount = elx('span','bcount','');
+  const bSum   = elx('span','bsum','');
+  const bSep   = elx('span','bsep');
+  const bSelK  = document.createElement('select');
+  bSelK.className = 'tsel'; bSelK.id = 'aus-bulk-kat';
+  { const o = document.createElement('option'); o.value = ''; o.textContent = 'Kategorie wählen …'; bSelK.append(o); }
+  kats.forEach(k => { const o = document.createElement('option'); o.value = String(k.id); o.textContent = decodeEnt(String(k.name || k.id)); bSelK.append(o); });
+  const bBtnKat = elx('button','btn ghost sm','Kategorie setzen');
+  const bBtnOk  = elx('button','btn gold sm','✓ als geprüft markieren');
+  const bBtnEx  = elx('button','btn ghost sm','als exportiert markieren');
+  const bBtnClr = elx('button','btn ghost sm','Auswahl aufheben');
+  bBtnKat.type = bBtnOk.type = bBtnEx.type = bBtnClr.type = 'button';
+  bBtnOk.style.width = 'auto';
+  bBtnClr.id = 'aus-bulk-clear';
+  bBtnKat.title = 'Die links gewählte Kategorie auf alle ausgewählten Belege anwenden';
+  bBtnOk.title  = 'Status aller ausgewählten Belege auf „geprüft" setzen';
+  bBtnEx.title  = 'Status aller ausgewählten Belege auf „exportiert" setzen';
+  bulk.append(bCount, bSum, bSep, bSelK, bBtnKat, bBtnOk, bBtnEx, bBtnClr);
+  function setBulkBusy(on){ [bSelK, bBtnKat, bBtnOk, bBtnEx, bBtnClr].forEach(x => { x.disabled = !!on; }); }
+  function updateBulkBar(){
+    const n = selIds.size;
+    bulk.classList.toggle('on', n > 0);
+    if (n){
+      let sum = 0;
+      selIds.forEach(id => { const b = byId.get(id); if (b) sum += belegNum(b.betrag_brutto); });
+      bCount.textContent = F(n) + (n === 1 ? ' Beleg ausgewählt' : ' Belege ausgewählt');
+      bSum.textContent = EUR(sum) + ' brutto';
+    }
+    if (selAllCb){
+      const all  = curShown.length > 0 && curShown.every(x => selIds.has(String(x.id)));
+      const some = curShown.some(x => selIds.has(String(x.id)));
+      selAllCb.checked = all;
+      selAllCb.indeterminate = some && !all;
+    }
+  }
+  function syncSelUI(){ // Checkboxen + Zeilen-Markierung nachziehen, ohne die Tabelle neu zu bauen
+    out.querySelectorAll('tr[data-bid]').forEach(tr => {
+      const on = selIds.has(tr.dataset.bid);
+      tr.classList.toggle('sel', on);
+      const c = tr.querySelector('input.rowsel');
+      if (c) c.checked = on;
+    });
+    updateBulkBar();
+  }
+  function clearSel(){ selIds.clear(); syncSelUI(); }
+  async function bulkApply(patch, verb){
+    const ids = Array.from(selIds);
+    if (!ids.length) return;
+    setBulkBusy(true);
+    try{
+      let done = ids;
+      if (MOCK){ // Vorschau-Guard: Sammel-Update nur lokal (inkl. MOCKDB), kein Supabase-Schreiben
+        ids.forEach(id => {
+          const src = (MOCKDB.fin_beleg || []).find(r => String(r.id) === id);
+          if (src) Object.assign(src, patch);
+        });
+      } else {   // EIN Batch-Update statt Einzel-Requests: update().in('id', [...])
+        sb = await getSb();
+        const { data, error } = await sb.from('fin_beleg').update(patch).in('id', ids).select('id');
+        if (error) throw error;
+        done = (data || []).map(r => String(r.id));
+        if (!done.length) throw new Error('Kein Beleg wurde serverseitig aktualisiert (fehlende Berechtigung).');
+      }
+      done.forEach(id => { const b = byId.get(String(id)); if (b) Object.assign(b, patch); });
+      cacheDrop('fin_beleg');
+      selIds.clear();
+      toast(F(done.length) + (done.length === 1 ? ' Beleg ' : ' Belege ') + verb
+        + (MOCK ? ' (Vorschau: nur lokal).' : '.')
+        + (done.length < ids.length ? ' — ' + F(ids.length - done.length) + ' ohne Berechtigung übersprungen.' : ''), true);
+      rerender();
+    }catch(e){
+      toast('Sammel-Aktion fehlgeschlagen: ' + friendly(e));
+    }finally{
+      setBulkBusy(false);
+    }
+  }
+  bBtnOk.addEventListener('click', ()=>bulkApply({ status:'geprüft' }, 'als „geprüft" markiert'));
+  bBtnEx.addEventListener('click', ()=>bulkApply({ status:'exportiert' }, 'als „exportiert" markiert'));
+  bBtnKat.addEventListener('click', ()=>{
+    const v = bSelK.value;
+    if (!v){ toast('Bitte zuerst eine Kategorie in der Auswahl-Leiste wählen.'); bSelK.focus(); return; }
+    const kHit = kats.find(k => String(k.id) === v);
+    bulkApply({ kategorie_id: kHit ? kHit.id : v }, 'auf «' + katName(kats, v) + '» gesetzt');
+  });
+  bBtnClr.addEventListener('click', clearSel);
 
   // --- Karte „Gelernte Händler-Regeln" (aufklappbar, mit Löschen) ---
   const regelCard = elx('div','card regelcard');
@@ -1270,7 +1583,7 @@ function renderAUS(body, belege, kats, regeln, syncLog){
     regelBody.append(wrap);
   }
   renderRegeln();
-  body.append(syncStrip, bar, kpiWrap, g2, info, out, sums, regelCard, hint);
+  body.append(syncStrip, bar, kpiWrap, g2, info, bulk, out, sums, regelCard, hint);
 
   const fmtMon = k => { const d = new Date(k + '-01T00:00:00'); return isNaN(+d) ? k : d.toLocaleDateString('de-DE', {month:'short', year:'2-digit'}); };
   function match(b){
@@ -1306,6 +1619,23 @@ function renderAUS(body, belege, kats, regeln, syncLog){
 
   function belegRow(b){
     const tr = document.createElement('tr');
+    tr.dataset.bid = String(b.id);
+    // Auswahl-Checkbox (Bulk-Aktionen)
+    const tdSel = document.createElement('td');
+    tdSel.className = 'selc';
+    const cbx = document.createElement('input');
+    cbx.type = 'checkbox';
+    cbx.className = 'rowsel';
+    cbx.checked = selIds.has(String(b.id));
+    cbx.setAttribute('aria-label', 'Beleg auswählen');
+    cbx.addEventListener('change', ()=>{
+      if (cbx.checked) selIds.add(String(b.id)); else selIds.delete(String(b.id));
+      tr.classList.toggle('sel', cbx.checked);
+      updateBulkBar();
+    });
+    tdSel.append(cbx);
+    tr.append(tdSel);
+    if (cbx.checked) tr.classList.add('sel');
     // Datum
     const tdD = document.createElement('td');
     tdD.textContent = b.beleg_datum ? deDate(b.beleg_datum) : '—';
@@ -1420,7 +1750,13 @@ function renderAUS(body, belege, kats, regeln, syncLog){
   }
   function renderBelegTable(container, rows){
     container.textContent = '';
+    curShown = rows.slice(0, 500);
+    // Auswahl auf die sichtbaren Zeilen begrenzen (weggefilterte Belege abwählen)
+    const shownIds = new Set(curShown.map(x => String(x.id)));
+    Array.from(selIds).forEach(id => { if (!shownIds.has(id)) selIds.delete(id); });
     if (!rows.length){
+      selAllCb = null;
+      updateBulkBar();
       empty(container, belege.length
         ? 'Kein Beleg entspricht den gesetzten Filtern.'
         : 'Noch keine Belege in Supabase — neue Belege landen automatisch über den Beleg-Scan hier.');
@@ -1430,6 +1766,20 @@ function renderAUS(body, belege, kats, regeln, syncLog){
     const table = document.createElement('table');
     const thead = document.createElement('thead');
     const trh   = document.createElement('tr');
+    const thSel = document.createElement('th');
+    thSel.className = 'selc';
+    selAllCb = document.createElement('input');
+    selAllCb.type = 'checkbox';
+    selAllCb.id = 'aus-selall';
+    selAllCb.title = 'Alle angezeigten Belege aus-/abwählen';
+    selAllCb.setAttribute('aria-label', 'Alle angezeigten Belege auswählen');
+    selAllCb.addEventListener('change', ()=>{
+      if (selAllCb.checked) curShown.forEach(x => selIds.add(String(x.id)));
+      else curShown.forEach(x => selIds.delete(String(x.id)));
+      syncSelUI();
+    });
+    thSel.append(selAllCb);
+    trh.append(thSel);
     [['Datum'],['Händler'],['Kategorie'],['Netto','num'],['MwSt','num'],['Brutto','num'],['Status'],['KI'],['Beleg']].forEach(([t, cls])=>{
       const th = document.createElement('th');
       th.textContent = t;
@@ -1438,11 +1788,12 @@ function renderAUS(body, belege, kats, regeln, syncLog){
     });
     thead.append(trh); table.append(thead);
     const tbody = document.createElement('tbody');
-    rows.slice(0, 500).forEach(b => tbody.append(belegRow(b)));
+    curShown.forEach(b => tbody.append(belegRow(b)));
     table.append(tbody);
     wrap.append(table);
     container.append(wrap);
     if (rows.length > 500) container.append(elx('div','finfo','Anzeige auf die ersten 500 Zeilen begrenzt — bitte Filter nutzen.'));
+    updateBulkBar();
   }
   function rerender(){
     updateMore();
@@ -1531,6 +1882,7 @@ function ordRelFehler(rel){
 }
 async function saveSyncOrdner(patch, id){
   const row = Object.assign({}, patch, { aktualisiert_am: new Date().toISOString() });
+  cacheDrop('fin_sync_ordner'); // Ordner-CRUD invalidiert den Cache — loadORD lädt danach frisch
   if (MOCK){ // Vorschau-Guard: CRUD nur lokal in MOCKDB, kein Supabase-Call
     const arr = MOCKDB.fin_sync_ordner;
     if (id != null){
@@ -1552,6 +1904,7 @@ async function saveSyncOrdner(patch, id){
   }
 }
 async function deleteSyncOrdner(id){
+  cacheDrop('fin_sync_ordner'); // Ordner-CRUD invalidiert den Cache
   if (MOCK){ // Vorschau-Guard: Delete nur lokal in MOCKDB
     const arr = MOCKDB.fin_sync_ordner;
     const i = arr.findIndex(r => String(r.id) === String(id));
@@ -1565,7 +1918,7 @@ async function deleteSyncOrdner(id){
 }
 async function loadORD(){
   const body = $('#body-ord');
-  spin(body, 'Sync-Ordner werden aus Supabase geladen …');
+  skeleton(body, { cards:3 }, 'Sync-Ordner werden aus Supabase geladen …');
   try{
     const rows = await fetchTable('fin_sync_ordner');
     renderORD(body, rows);
@@ -1912,7 +2265,7 @@ function annahmeWert(k, v){
 }
 async function loadPROG(){
   const body = $('#body-prog');
-  spin(body, 'Prognose wird aus Supabase geladen …');
+  skeleton(body, { kpis:4, charts:2 }, 'Prognose wird aus Supabase geladen …');
   try{
     const [prognosen, belege, kpi] = await Promise.all([
       fetchTable('fin_prognose'), fetchTable('fin_beleg'), fetchTable('fin_pas_kpi')
@@ -2437,6 +2790,7 @@ function makeFilters(opts, onChange){
     i.type = 'search';
     i.placeholder = 'Freitext — Name, Nummer, Betrag …';
     i.addEventListener('input', deb(()=>{ state.q = i.value.trim().toLowerCase(); onChange(state); }, 200));
+    onEnter(i, ()=>{ state.q = i.value.trim().toLowerCase(); onChange(state); });
     bar.append(fld('Suche', i, true));
   }
   if (opts.dates){
@@ -2556,7 +2910,7 @@ function initPat(){
     if (!q){ info.textContent = ''; empty(out, 'Bitte einen Suchbegriff eingeben.'); return; }
     detail.textContent = '';
     info.textContent = '';
-    spin(out, 'Suche läuft — PAS wird live abgefragt …');
+    skeleton(out, { rows:4 }, 'Suche läuft — PAS wird live abgefragt …');
     try{
       // lt. Protokoll: query UND q im Body, json-Variante zuerst, dann form-Variante
       const res = await loadList('invoice/search', { query:q, q:q });
@@ -2577,7 +2931,7 @@ function initPat(){
 // ---------------- Tab C: Rechnungsausgang (PHI, live) ----------------
 async function loadRE(){
   const body = $('#body-re');
-  spin(body, 'Rechnungsausgang wird live aus PAS geladen …');
+  skeleton(body, { rows:8 }, 'Rechnungsausgang wird live aus PAS geladen …');
   try{
     const res = await loadList('invoice/list');
     body.textContent = '';
@@ -2605,7 +2959,7 @@ async function loadRE(){
 // ---------------- Tab D: Zahlungen & Konto (PHI, live) ----------------
 async function loadZA(){
   const body = $('#body-za');
-  spin(body, 'Kontobewegungen werden live aus PAS geladen …');
+  skeleton(body, { rows:8 }, 'Kontobewegungen werden live aus PAS geladen …');
   try{
     const res = await loadList('accounting-entry/list');
     body.textContent = '';
@@ -2666,7 +3020,7 @@ function rowAmount(r){
 // ---------------- Tab E: Mahnjournal (PHI, live) ----------------
 async function loadMJ(){
   const body = $('#body-mahn');
-  spin(body, 'Mahnjournal wird live aus PAS geladen …');
+  skeleton(body, { charts:1, rows:5 }, 'Mahnjournal wird live aus PAS geladen …');
   try{
     // Referenz-Call lt. Protokoll (multipart/form — funktioniert sicher)
     const r = await pasCall({ op:'pas', method:'POST', path:'dashboard/statistic/open-item', mode:'form', body:{ clientIds: PAS_CLIENT_ID } });
@@ -2721,7 +3075,7 @@ async function loadMJ(){
     const box = elx('div');
     sect.append(det, box);
     body.append(sect);
-    spin(box, 'Rechnungen werden geladen …');
+    skeleton(box, { rows:4 }, 'Rechnungen werden geladen …');
     try{
       const res = await loadList('invoice/list');
       const rows = res.rows.filter(x => { const d = rowDunning(x); return d !== null && d >= 1; });
